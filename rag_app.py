@@ -201,7 +201,7 @@ def main():
         # Default interface: Allow admin to log in or switch modes
         password = st.sidebar.text_input("Enter Admin Password", type="password")
         if st.sidebar.button("Switch to Admin Mode"):
-            if password == "your_admin_password":  # Replace with your secure password
+            if password == "admin_password":  # Replace with your secure password
                 st.session_state.admin_mode = True
             else:
                 st.error("Incorrect password.")
