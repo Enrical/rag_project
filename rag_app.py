@@ -3,6 +3,7 @@ import requests
 from anthropic import Anthropic
 from urllib.parse import urlparse
 from typing import List, Dict, Optional
+import json
 
 
 class RAGPipeline:
@@ -64,9 +65,12 @@ Tono: Actúa con un tono familiar, accesible y profesional. Responde con clarida
 Enrique se asegura de facilitar temas complejos con ejemplos claros y prácticos cuando es necesario.
 Responde solo preguntas relacionadas con los documentos {chunk_texts}.
 /
-Para cualquier otra pregunta responde: "Todavía no tengo ese conocimiento, pero seguiré aprendiendo de Enrique para poder ser de más ayuda pronto"."""
+Para cualquier otra pregunta responde: "Todavía no tengo ese conocimiento, pero seguiré aprendiendo de Enrique para poder ser de más ayuda pronto"."""    
 
     def generate_response(self, system_prompt: str, query: str, chat_history: List[Dict]) -> str:
+        """
+        Generate a response using Anthropic's Claude model.
+        """
         chat_history.append({"role": "user", "content": query})
         message = self.anthropic_client.messages.create(
             model="claude-3-sonnet-20240229",
@@ -77,18 +81,41 @@ Para cualquier otra pregunta responde: "Todavía no tengo ese conocimiento, pero
         chat_history.append({"role": "assistant", "content": message.content[0].text})
         return message.content[0].text
 
+
+def load_documents():
+    """Load documents from a JSON file."""
+    try:
+        with open("documents.json", "r") as file:
+            return json.load(file)
+    except Exception as e:
+        st.error(f"Error loading documents.json: {str(e)}")
+        return {}
+
+
 def initialize_session_state():
-    """Initialize all session state variables."""
+    """Initialize session state variables."""
     if 'pipeline' not in st.session_state:
-        st.session_state.pipeline = None
+        ragie_key = "your_ragie_api_key"
+        anthropic_key = "your_anthropic_api_key"
+        st.session_state.pipeline = RAGPipeline(ragie_key, anthropic_key)
+
+    if 'document_sets' not in st.session_state:
+        st.session_state.document_sets = load_documents()
+
+    if 'current_client' not in st.session_state:
+        st.session_state.current_client = None
+
     if 'uploaded_documents' not in st.session_state:
         st.session_state.uploaded_documents = []
+
     if 'chat_history' not in st.session_state:
         st.session_state.chat_history = []
-    if 'admin_mode' not in st.session_state:
-        st.session_state.admin_mode = False
-    if 'chat_mode' not in st.session_state:  # New state for client chat mode
+
+    if 'chat_mode' not in st.session_state:
         st.session_state.chat_mode = False
+
+    if 'admin_mode' not in st.session_state:
+        st.session_state.admin_mode = True
 
 
 def admin_interface():
@@ -103,81 +130,98 @@ def admin_interface():
         else:
             st.error("Please provide both API keys.")
 
-    st.sidebar.markdown("### Document Upload")
-    doc_url = st.sidebar.text_input("Enter Document URL")
-    doc_name = st.sidebar.text_input("Document Name (Optional)")
-    upload_mode = st.sidebar.selectbox("Upload Mode", ["fast", "accurate"])
+    # Select client
+    client = st.sidebar.selectbox(
+        "Select Client",
+        options=["Select a Client"] + list(st.session_state.document_sets.keys())
+    )
 
-    if st.sidebar.button("Upload Document"):
-        if st.session_state.pipeline and doc_url:
-            try:
-                response = st.session_state.pipeline.upload_document(doc_url, doc_name, upload_mode)
-                st.session_state.uploaded_documents.append({"url": doc_url, "name": doc_name or "Document"})
-                st.success(f"Document '{doc_name or doc_url}' uploaded successfully!")
-            except Exception as e:
-                st.error(f"Error uploading document: {str(e)}")
-        else:
-            st.error("Please configure API keys first.")
+    if client != "Select a Client":
+        st.session_state.current_client = client
+        st.session_state.uploaded_documents = st.session_state.document_sets[client]
 
-    st.sidebar.write("Uploaded Documents:")
-    for doc in st.session_state.uploaded_documents:
-        st.sidebar.write(f"- {doc['name']} ({doc['url']})")
-
-    # Enable the "Switch to Chat" button once everything is ready
-    if st.session_state.pipeline and st.session_state.uploaded_documents:
         if st.sidebar.button("Switch to Chat Mode"):
             st.session_state.admin_mode = False
             st.session_state.chat_mode = True
 
+    if st.session_state.current_client:
+        st.sidebar.markdown("### Selected Documents")
+        for doc in st.session_state.uploaded_documents:
+            st.sidebar.markdown(f"- **{doc['name']}** ({doc['url']})")
+
+
 def chat_interface():
-    st.markdown("### 🕵️‍♂️ Habla con Enrique tu asistente virtual")
+    # Add custom CSS styles for chat
+    st.markdown(
+        """
+        <style>
+        .user-message {
+            color: black;
+            font-weight: normal;
+            margin-bottom: 10px;
+        }
+        .ai-message {
+            color: blue;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.markdown("### Chat with Enrique AI")
     if not st.session_state.pipeline:
         st.error("The system is not configured yet. Please contact the administrator.")
         return
 
-    # Display chat history
+    # Display chat history with CSS classes
     if st.session_state.chat_history:
         for chat in st.session_state.chat_history:
             if chat["role"] == "user":
-                st.markdown(f"**You:** {chat['content']}")
+                # User query styled with CSS
+                st.markdown(
+                    f'<div class="user-message">You: {chat["content"]}</div>',
+                    unsafe_allow_html=True
+                )
             else:
-                st.markdown(f"**Enrique AI:** {chat['content']}")
+                # AI response styled with CSS
+                st.markdown(
+                    f'<div class="ai-message">Enrique AI: {chat["content"]}</div>',
+                    unsafe_allow_html=True
+                )
 
-                # Use a temporary variable for the input
+    # Input for user query
     if "current_query" not in st.session_state:
         st.session_state.current_query = ""
 
-    st.session_state.current_query = st.text_input(
-        "Enter your message", 
-        value=st.session_state.current_query, 
-        key="chat_query"
-    )
+    # Render the text input
+    query = st.text_input("Enter your message", value=st.session_state.current_query, key="chat_query")
 
-    # Input for user query
-    #query = st.text_input("Escribe tu mensaje", key="chat_query")
-
-    # Add a state variable to track query submission
-    #if "query_submitted" not in st.session_state:
-     #   st.session_state.query_submitted = False
-
-    if st.button("Enviar"):
-        if st.session_state.current_query.strip():  # Check if input is not empty
+    # Handle query submission
+    if st.button("Send"):
+        if query.strip():  # Ensure the input is not empty
             try:
-                with st.spinner("Generando respuesta..."):
-                    chunks = st.session_state.pipeline.retrieve_chunks(st.session_state.current_query)
+                with st.spinner("Generating response..."):
+                    # Retrieve relevant chunks
+                    chunks = st.session_state.pipeline.retrieve_chunks(query)
                     if not chunks:
                         st.error("No relevant information found.")
                     else:
+                        # Generate the system prompt
                         system_prompt = st.session_state.pipeline.create_system_prompt(chunks)
+
+                        # Generate the response
                         response = st.session_state.pipeline.generate_response(
-                            system_prompt, st.session_state.current_query, st.session_state.chat_history
+                            system_prompt, query, st.session_state.chat_history
                         )
+
                         # Update chat history
-                        st.session_state.chat_history.append({"role": "user", "content": st.session_state.current_query})
+                        st.session_state.chat_history.append({"role": "user", "content": query})
                         st.session_state.chat_history.append({"role": "assistant", "content": response})
 
                         # Clear the input field
-                        st.session_state.current_query = ""  # Clear after processing
+                        st.session_state.current_query = ""  # Reset the input state
             except Exception as e:
                 st.error(f"Error generating response: {str(e)}")
         else:
@@ -192,22 +236,13 @@ def chat_interface():
 def main():
     st.set_page_config(page_title="Client Chat System",
                        page_icon="https://essent-ia.com/wp-content/uploads/2024/11/cropped-cropped-Picture1.png",
-                        layout="centered")
+                       layout="centered")
     initialize_session_state()
 
     if st.session_state.admin_mode:
         admin_interface()
     elif st.session_state.chat_mode:
         chat_interface()
-    else:
-        # Default interface: Allow admin to log in or switch modes
-        password = st.sidebar.text_input("Enter Admin Password", type="password")
-        if st.sidebar.button("Switch to Admin Mode"):
-            if password == "admin_password":  # Replace with your secure password
-                st.session_state.admin_mode = True
-            else:
-                st.error("Incorrect password.")
-
 
 
 if __name__ == "__main__":
