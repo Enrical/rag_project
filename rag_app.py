@@ -190,7 +190,9 @@ def chat_interface():
 
 
 def main():
-    st.set_page_config(page_title="Client Chat System", layout="centered")
+    st.set_page_config(page_title="Client Chat System",
+                       page_icon="https://essent-ia.com/wp-content/uploads/2024/11/cropped-cropped-Picture1.png",
+                        layout="centered")
     initialize_session_state()
 
     if st.session_state.admin_mode:
