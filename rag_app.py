@@ -88,10 +88,10 @@ def initialize_session_state():
 
 
 def main():
-    st.set_page_config(page_title="Multi-Document Chat System", layout="centered")
+    st.set_page_config(page_title="Enrique tu ayudante virtual", layout="centered")
     initialize_session_state()  # Ensure session state is initialized
 
-    st.title("📄 Multi-Document Chat System")
+    st.title("🕵️‍♂️ Enrique tu ayudante virtual")
 
     # API Keys Section
     with st.expander("🔑 Configure API Keys", expanded=not st.session_state.pipeline):
