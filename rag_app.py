@@ -161,7 +161,7 @@ def chat_interface():
             margin-bottom: 10px;
         }
         .ai-message {
-            color: blue;
+            color: black;
             font-weight: bold;
             margin-bottom: 10px;
         }
