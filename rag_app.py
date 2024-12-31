@@ -65,21 +65,19 @@ Tono: Actúa con un tono familiar, accesible y profesional. Responde con clarida
 Enrique se asegura de facilitar temas complejos con ejemplos claros y prácticos cuando es necesario.
 Responde solo preguntas relacionadas con los documentos {chunk_texts}.
 /
-Para cualquier otra pregunta responde: "Todavía no tengo ese conocimiento, pero seguiré aprendiendo de Enrique para poder ser de más ayuda pronto"."""    
+Para cualquier otra pregunta responde: "Todavía no tengo ese conocimiento, pero seguiré aprendiendo de Enrique para poder ser de más ayuda pronto"."""
 
-    def generate_response(self, system_prompt: str, query: str, chat_history: List[Dict]) -> str:
-        """
-        Generate a response using Anthropic's Claude model.
-        """
-        chat_history.append({"role": "user", "content": query})
-        message = self.anthropic_client.messages.create(
+    def generate_response(self, system_prompt: str, query: str) -> str:
+        messages = [
+            {"role": "user", "content": query}
+        ]
+        response = self.anthropic_client.messages.create(
             model="claude-3-sonnet-20240229",
             max_tokens=1024,
             system=system_prompt,
-            messages=chat_history
+            messages=messages
         )
-        chat_history.append({"role": "assistant", "content": message.content[0].text})
-        return message.content[0].text
+        return response.content[0].text
 
 
 def load_documents():
@@ -130,7 +128,6 @@ def admin_interface():
         else:
             st.error("Please provide both API keys.")
 
-    # Select client
     client = st.sidebar.selectbox(
         "Select Client",
         options=["Select a Client"] + list(st.session_state.document_sets.keys())
@@ -151,7 +148,6 @@ def admin_interface():
 
 
 def chat_interface():
-    # Add custom CSS styles for chat
     st.markdown(
         """
         <style>
@@ -161,82 +157,73 @@ def chat_interface():
             margin-bottom: 10px;
         }
         .ai-message {
-            color: black;
+            color: darkblue;
             font-weight: bold;
             margin-bottom: 10px;
         }
+        .st-key-chat_query{
+            display: flex;
+            flex-direction: column-reverse;
+            overflow-y: auto;
+            max-height: 60vh;
+        }        
         /* Ensure child <p> elements inside .ai-message inherit the styles */
         .ai-message p {
         color: inherit; /* Use the color of the parent */
         font-weight: inherit; /* Use the font weight of the parent */
-        margin-top: 5px; /* Optional: Adjust margins for spacing */
-}
+        }
+        .stButton {
+            display: flex;
+            flex-direction: column-reverse;
+            overflow-y: auto;
+            max-height: 60vh;
+        }
         </style>
         """,
         unsafe_allow_html=True
     )
 
-    st.markdown("### Chat with Enrique AI")
+    st.markdown("### 🕵️‍♂️ Habla con Enrique AI")
     if not st.session_state.pipeline:
         st.error("The system is not configured yet. Please contact the administrator.")
         return
 
-    # Display chat history with CSS classes
-    if st.session_state.chat_history:
-        for chat in st.session_state.chat_history:
-            if chat["role"] == "user":
-                # User query styled with CSS
-                st.markdown(
-                    f'<div class="user-message">You: {chat["content"]}</div>',
-                    unsafe_allow_html=True
-                )
-            else:
-                # AI response styled with CSS
-                st.markdown(
-                    f'<div class="ai-message">Enrique AI: {chat["content"]}</div>',
-                    unsafe_allow_html=True
-                )
+    chat_history = st.session_state.chat_history
 
-    # Input for user query
-    if "current_query" not in st.session_state:
-        st.session_state.current_query = ""
+    if chat_history:
+            for message in chat_history:
+                role = message["role"]
+                content = message["content"]
+                if role == "user":
+                    st.markdown(f'<div class="user-message">You: {content}</div>', unsafe_allow_html=True)
+                else:
+                    st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {content}</div>', unsafe_allow_html=True)
 
-    # Render the text input
-    query = st.text_input("Enter your message", value=st.session_state.current_query, key="chat_query")
+  
+    query = st.text_input("Escribe tu mensaje", key="chat_query")
 
-    # Handle query submission
-    if st.button("Send"):
-        if query.strip():  # Ensure the input is not empty
+    if st.button("Enviar"):
+        if query.strip():
             try:
                 with st.spinner("Generating response..."):
-                    # Retrieve relevant chunks
                     chunks = st.session_state.pipeline.retrieve_chunks(query)
                     if not chunks:
-                        st.error("No relevant information found.")
+                        response = "No relevant information found."
                     else:
-                        # Generate the system prompt
                         system_prompt = st.session_state.pipeline.create_system_prompt(chunks)
+                        response = st.session_state.pipeline.generate_response(system_prompt, query)
 
-                        # Generate the response
-                        response = st.session_state.pipeline.generate_response(
-                            system_prompt, query, st.session_state.chat_history
-                        )
+                    st.session_state.chat_history.append({"role": "user", "content": query})
+                    st.session_state.chat_history.append({"role": "assistant", "content": response})
 
-                        # Update chat history
-                        st.session_state.chat_history.append({"role": "user", "content": query})
-                        st.session_state.chat_history.append({"role": "assistant", "content": response})
+                    st.markdown(f'<div class="user-message">You: {query}</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="ai-message">🕵️‍♂️Enrique AI: {response}</div>', unsafe_allow_html=True)
 
-                        # Clear the input field
-                        st.session_state.current_query = ""  # Reset the input state
             except Exception as e:
                 st.error(f"Error generating response: {str(e)}")
         else:
             st.error("Please enter a message.")
 
-    # Add a "Switch to Admin Mode" button
-    if st.button("Switch to Admin Mode"):
-        st.session_state.chat_mode = False
-        st.session_state.admin_mode = True
 
 
 def main():
@@ -250,6 +237,9 @@ def main():
     elif st.session_state.chat_mode:
         chat_interface()
 
+    if st.button("Switch to Admin Mode"):
+        st.session_state.chat_mode = False
+        st.session_state.admin_mode = True
 
 if __name__ == "__main__":
     main()
