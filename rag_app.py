@@ -236,6 +236,8 @@ def chat_interface():
                         else:
                             st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {content}</div>', unsafe_allow_html=True)
 
+                    # Clear the input field
+                    #st.session_state.chat_query = ""
 
             except Exception as e:
                 st.error(f"Error generating response: {str(e)}")
