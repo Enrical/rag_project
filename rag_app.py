@@ -83,18 +83,14 @@ Responde solo preguntas relacionadas con los documentos {chunk_texts}.
 Para cualquier otra pregunta responde: "Todavía no tengo ese conocimiento, pero seguiré aprendiendo de Enrique para poder ser de más ayuda pronto."""""
 
 
-    def generate_response(self, system_prompt: str, query: str) -> str:
-        """Generate a response using Anthropic's Claude API."""
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": query}
-        ]
-        response = self.anthropic_client.messages.create(
-            model="claude-3-sonnet-20240229",
-            max_tokens=1024,
-            messages=messages
-        )
-        return response.content[0].text
+def generate_response(self, system_prompt: str, query: str) -> str:
+    """Generate a response using Anthropic's Claude API."""
+    response = self.anthropic_client.completions.create(
+        model="claude-3-sonnet-20240229",
+        max_tokens_to_sample=1024,
+        prompt=f"{system_prompt}\n\nUser: {query}\nAssistant:"
+    )
+    return response.completion.strip()
 
 def load_documents():
     """Load documents from a JSON file."""
