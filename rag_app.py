@@ -5,6 +5,24 @@ from urllib.parse import urlparse
 from typing import List, Dict, Optional
 import json
 
+PASSWORD = "Enrique"  # Replace with your secure password
+
+
+def check_password():
+    """Display a password input box and verify access."""
+    if "password_verified" not in st.session_state:
+        st.session_state.password_verified = False
+
+    if not st.session_state.password_verified:
+        st.text_input("Enter Password", type="password", key="password_input")
+        if st.button("Submit"):
+            if st.session_state.password_input == PASSWORD:
+                st.session_state.password_verified = True
+                st.success("Access granted!")
+            else:
+                st.error("Invalid password. Please try again.")
+        st.stop()
+
 
 class RAGPipeline:
     def __init__(self, ragie_api_key: str, anthropic_api_key: str):
@@ -67,18 +85,6 @@ Responde solo preguntas relacionadas con los documentos {chunk_texts}.
 /
 Para cualquier otra pregunta responde: "Todavía no tengo ese conocimiento, pero seguiré aprendiendo de Enrique para poder ser de más ayuda pronto."""""
 
-    def generate_response(self, system_prompt: str, query: str) -> str:
-        messages = [
-            {"role": "user", "content": query}
-        ]
-        response = self.anthropic_client.messages.create(
-            model="claude-3-sonnet-20240229",
-            max_tokens=1024,
-            system=system_prompt,
-            messages=messages
-        )
-        return response.content[0].text
-
 
 def load_documents():
     """Load documents from a JSON file."""
@@ -121,7 +127,6 @@ def admin_interface():
 
     # Show the admin panel only when in admin mode
     if st.session_state.admin_mode:
-        # Client selection
         client = st.sidebar.selectbox(
             "Selecciona tu asistente",
             options=["Selecciona tu asistente"] + list(st.session_state.document_sets.keys())
@@ -135,12 +140,10 @@ def admin_interface():
             for doc in st.session_state.uploaded_documents:
                 st.sidebar.markdown(f"- [**{doc['name']}**]({doc['url']})", unsafe_allow_html=True)
 
-    # Add a toggle button to switch between admin and chat modes
     toggle_button_label = "Switch to Chat Mode" if st.session_state.admin_mode else "Switch to Admin Mode"
     if st.sidebar.button(toggle_button_label):
         st.session_state.admin_mode = not st.session_state.admin_mode
         st.session_state.chat_mode = not st.session_state.chat_mode
-
 
 
 def chat_interface():
@@ -157,23 +160,6 @@ def chat_interface():
             font-weight: bold;
             margin-bottom: 10px;
         }
-        .st-key-chat_query{
-            display: flex;
-            flex-direction: column-reverse;
-            overflow-y: auto;
-            max-height: 60vh;
-        }        
-        /* Ensure child <p> elements inside .ai-message inherit the styles */
-        .ai-message p {
-        color: inherit; /* Use the color of the parent */
-        font-weight: inherit; /* Use the font weight of the parent */
-        }
-        .stButton {
-            display: flex;
-            flex-direction: column-reverse;
-            overflow-y: auto;
-            max-height: 60vh;
-        }
         </style>
         """,
         unsafe_allow_html=True
@@ -187,15 +173,14 @@ def chat_interface():
     chat_history = st.session_state.chat_history
 
     if chat_history:
-            for message in chat_history:
-                role = message["role"]
-                content = message["content"]
-                if role == "user":
-                    st.markdown(f'<div class="user-message">You: {content}</div>', unsafe_allow_html=True)
-                else:
-                    st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {content}</div>', unsafe_allow_html=True)
+        for message in chat_history:
+            role = message["role"]
+            content = message["content"]
+            if role == "user":
+                st.markdown(f'<div class="user-message">You: {content}</div>', unsafe_allow_html=True)
+            else:
+                st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {content}</div>', unsafe_allow_html=True)
 
-  
     query = st.text_input("Escribe tu mensaje", key="chat_query")
 
     if st.button("Enviar"):
@@ -213,7 +198,7 @@ def chat_interface():
                     st.session_state.chat_history.append({"role": "assistant", "content": response})
 
                     st.markdown(f'<div class="user-message">You: {query}</div>', unsafe_allow_html=True)
-                    st.markdown(f'<div class="ai-message">🕵️‍♂️Enrique AI: {response}</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {response}</div>', unsafe_allow_html=True)
 
             except Exception as e:
                 st.error(f"Error generating response: {str(e)}")
@@ -221,14 +206,14 @@ def chat_interface():
             st.error("Please enter a message.")
 
 
-
 def main():
     st.set_page_config(page_title="Client Chat System",
                        page_icon="https://essent-ia.com/wp-content/uploads/2024/11/cropped-cropped-Picture1.png",
                        layout="centered")
+
+    check_password()  # Ensure password is verified first
     initialize_session_state()
 
-    # Admin panel is always accessible in the sidebar
     admin_interface()
 
     if st.session_state.chat_mode:
