@@ -217,15 +217,6 @@ def chat_interface():
 
             # Generate response and append it
             try:
-                with st.container():
-                    for message in st.session_state.chat_history:
-                        role = message["role"]
-                        content = message["content"]
-                        if role == "user":
-                            st.markdown(f'<div class="user-message">You: {content}</div>', unsafe_allow_html=True)
-                        else:
-                            st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {content}</div>', unsafe_allow_html=True)
-
                 with st.spinner("Generando respuesta..."):
                     chunks = st.session_state.pipeline.retrieve_chunks(query)
                     if not chunks:
