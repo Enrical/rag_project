@@ -155,7 +155,7 @@ def admin_interface():
 def chat_interface():
     st.markdown(
         """
-         <style>
+        <style>
         .user-message {
             color: black;
             font-weight: normal;
@@ -190,8 +190,8 @@ def chat_interface():
 
     st.markdown("### 🕵️‍♂️ Habla con Enrique AI")
     if not st.session_state.pipeline:
-            st.error("The system is not configured yet. Please contact the administrator.")
-            return
+        st.error("The system is not configured yet. Please contact the administrator.")
+        return
 
     # Display chat history
     chat_history = st.session_state.chat_history
@@ -225,13 +225,14 @@ def chat_interface():
                     st.session_state.chat_history.append({"role": "user", "content": query})
                     st.session_state.chat_history.append({"role": "assistant", "content": response})
 
-                # Clear the input field
-                st.session_state.current_query = ""
+                    # Force rerun to refresh the chat history
+                    st.experimental_rerun()
 
             except Exception as e:
                 st.error(f"Error generating response: {str(e)}")
         else:
             st.error("Please enter a message.")
+
 
 
 def main():
