@@ -234,9 +234,6 @@ def main():
     if st.session_state.chat_mode:
         chat_interface()
 
-  #  if st.button("Cambiar a modo Admin"):
-   #     st.session_state.chat_mode = False
-    #    st.session_state.admin_mode = True
 
 if __name__ == "__main__":
     main()
