@@ -193,21 +193,19 @@ def chat_interface():
         st.error("The system is not configured yet. Please contact the administrator.")
         return
 
-    # Display chat history
-    for message in st.session_state.chat_history:
-        role = message["role"]
-        content = message["content"]
-        if role == "user":
-            st.markdown(f'<div class="user-message">You: {content}</div>', unsafe_allow_html=True)
-        else:
-            st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {content}</div>', unsafe_allow_html=True)
-
-    # Temporary query storage to avoid modifying `st.session_state.chat_query` directly
-    if "temp_query" not in st.session_state:
-        st.session_state.temp_query = ""
+    # Display chat history dynamically
+    chat_placeholder = st.empty()  # Placeholder to dynamically update chat history
+    with chat_placeholder.container():
+        for message in st.session_state.chat_history:
+            role = message["role"]
+            content = message["content"]
+            if role == "user":
+                st.markdown(f'<div class="user-message">You: {content}</div>', unsafe_allow_html=True)
+            else:
+                st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {content}</div>', unsafe_allow_html=True)
 
     # Input for user query
-    query = st.text_input("Escribe tu mensaje", value=st.session_state.temp_query, key="chat_query")
+    query = st.text_input("Escribe tu mensaje", key="chat_query", value="")
 
     if st.button("Enviar"):
         if query.strip():
@@ -227,11 +225,18 @@ def chat_interface():
                     # Append the assistant's response to chat history
                     st.session_state.chat_history.append({"role": "assistant", "content": response})
 
+                # Refresh the chat history dynamically
+                with chat_placeholder.container():
+                    for message in st.session_state.chat_history:
+                        role = message["role"]
+                        content = message["content"]
+                        if role == "user":
+                            st.markdown(f'<div class="user-message">You: {content}</div>', unsafe_allow_html=True)
+                        else:
+                            st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {content}</div>', unsafe_allow_html=True)
+
             except Exception as e:
                 st.error(f"Error generating response: {str(e)}")
-
-            # Reset the temp query
-            st.session_state.temp_query = ""
         else:
             st.error("Please enter a message.")
 
