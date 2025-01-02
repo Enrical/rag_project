@@ -192,8 +192,8 @@ def chat_interface():
                         system_prompt = st.session_state.pipeline.create_system_prompt(chunks)
                         response = st.session_state.pipeline.generate_response(system_prompt, query)
 
-                   # st.session_state.chat_history.append({"role": "user", "content": query})
-                   # st.session_state.chat_history.append({"role": "assistant", "content": response})
+                    st.session_state.chat_history.append({"role": "user", "content": query})
+                    st.session_state.chat_history.append({"role": "assistant", "content": response})
 
             except Exception as e:
                 st.error(f"Error generating response: {str(e)}")
