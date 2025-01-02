@@ -5,20 +5,6 @@ from urllib.parse import urlparse
 from typing import List, Dict, Optional
 import json
 
-# Ensure page config is the very first Streamlit command
-st.set_page_config(
-    page_title="Client Chat System",
-    page_icon="https://essent-ia.com/wp-content/uploads/2024/11/cropped-cropped-Picture1.png",
-    layout="centered"
-)
-
-def load_css(file_path: str):
-    """Load a CSS file into the app."""
-    with open(file_path, "r") as f:
-        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-
-# Load the CSS file
-load_css("styles.css")
 
 class RAGPipeline:
     def __init__(self, ragie_api_key: str, anthropic_api_key: str):
@@ -70,16 +56,16 @@ class RAGPipeline:
         return f"""Este asistente, Enrique, es el asistente interno de la Gestoría Mays para el puesto de gerente de la Gestoría.
 /
 Personalidad:
-Estructurado, con capacidad para manejar sistemas y herramientas administrativas, y con una actitud proactiva hacia la mejora de procesos. A la vez, demuestra una cierta flexibilidad y empatía en la gestión del equipo, asegurándose de que haya consenso y evitando conflictos innecesarios. Haz una broma al comenzar la interacción.
+Estructurado, con capacidad para manejar sistemas y herramientas administrativas, y con una actitud proactiva hacia la mejora de procesos. A la vez, demuestra una cierta flexibilidad y empatía en la gestión del equipo, asegurándose de que haya consenso y evitando conflictos innecesarios.
 /
 Objetivo: Responder preguntas sobre los documentos a los que tengo acceso de manera precisa y explicando con cercanía y familiaridad.
 /
-Tono: Actúa con un tono familiar, accesible y profesional. Responde con claridad y precisión, ofreciendo primero una respuesta breve y directa a las preguntas. Al terminar esta explicación haz una pregunta para amplíar la información o profundizar en el tema. Da respuestas claras cuando la información esté disponible.
+Tono: Actúa con un tono familiar, gracioso, accesible y profesional. Responde con claridad y precisión, ofreciendo primero una respuesta breve y directa a las preguntas. Al terminar esta explicación haz una pregunta para amplíar la información o profundizar en el tema. Da respuestas claras cuando la información esté disponible.
 /
 Enrique se asegura de facilitar temas complejos con ejemplos claros y prácticos cuando es necesario.
 Responde solo preguntas relacionadas con los documentos {chunk_texts}.
 /
-Para cualquier otra pregunta responde: "Todavía no tengo ese conocimiento, pero seguiré aprendiendo de Enrique para poder ser de más ayuda pronto."""
+Para cualquier otra pregunta responde: "Todavía no tengo ese conocimiento, pero seguiré aprendiendo de Enrique para poder ser de más ayuda pronto."""""
 
     def generate_response(self, system_prompt: str, query: str) -> str:
         messages = [
@@ -133,6 +119,7 @@ def initialize_session_state():
 def admin_interface():
     st.sidebar.markdown("### Admin Panel")
 
+    # Client selection
     client = st.sidebar.selectbox(
         "Select Client",
         options=["Select a Client"] + list(st.session_state.document_sets.keys())
@@ -153,6 +140,41 @@ def admin_interface():
 
 
 def chat_interface():
+    st.markdown(
+        """
+        <style>
+        .user-message {
+            color: black;
+            font-weight: normal;
+            margin-bottom: 10px;
+        }
+        .ai-message {
+            color: darkblue;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .st-key-chat_query{
+            display: flex;
+            flex-direction: column-reverse;
+            overflow-y: auto;
+            max-height: 60vh;
+        }        
+        /* Ensure child <p> elements inside .ai-message inherit the styles */
+        .ai-message p {
+        color: inherit; /* Use the color of the parent */
+        font-weight: inherit; /* Use the font weight of the parent */
+        }
+        .stButton {
+            display: flex;
+            flex-direction: column-reverse;
+            overflow-y: auto;
+            max-height: 60vh;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
     st.markdown("### 🕵️‍♂️ Habla con Enrique AI")
     if not st.session_state.pipeline:
         st.error("The system is not configured yet. Please contact the administrator.")
@@ -161,14 +183,15 @@ def chat_interface():
     chat_history = st.session_state.chat_history
 
     if chat_history:
-        for message in chat_history:
-            role = message["role"]
-            content = message["content"]
-            if role == "user":
-                st.markdown(f'<div class="user-message">You: {content}</div>', unsafe_allow_html=True)
-            else:
-                st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {content}</div>', unsafe_allow_html=True)
+            for message in chat_history:
+                role = message["role"]
+                content = message["content"]
+                if role == "user":
+                    st.markdown(f'<div class="user-message">You: {content}</div>', unsafe_allow_html=True)
+                else:
+                    st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {content}</div>', unsafe_allow_html=True)
 
+  
     query = st.text_input("Escribe tu mensaje", key="chat_query")
 
     if st.button("Enviar"):
@@ -185,13 +208,20 @@ def chat_interface():
                     st.session_state.chat_history.append({"role": "user", "content": query})
                     st.session_state.chat_history.append({"role": "assistant", "content": response})
 
+                    st.markdown(f'<div class="user-message">You: {query}</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="ai-message">🕵️‍♂️Enrique AI: {response}</div>', unsafe_allow_html=True)
+
             except Exception as e:
                 st.error(f"Error generating response: {str(e)}")
         else:
             st.error("Please enter a message.")
 
 
+
 def main():
+    st.set_page_config(page_title="Client Chat System",
+                       page_icon="https://essent-ia.com/wp-content/uploads/2024/11/cropped-cropped-Picture1.png",
+                       layout="centered")
     initialize_session_state()
 
     if st.session_state.admin_mode:
@@ -202,7 +232,6 @@ def main():
     if st.button("Switch to Admin Mode"):
         st.session_state.chat_mode = False
         st.session_state.admin_mode = True
-
 
 if __name__ == "__main__":
     main()
