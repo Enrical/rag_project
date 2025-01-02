@@ -202,13 +202,18 @@ def chat_interface():
         else:
             st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {content}</div>', unsafe_allow_html=True)
 
+    # Temporary query storage to avoid modifying `st.session_state.chat_query` directly
+    if "temp_query" not in st.session_state:
+        st.session_state.temp_query = ""
+
     # Input for user query
-    query = st.text_input("Escribe tu mensaje", key="chat_query")
+    query = st.text_input("Escribe tu mensaje", value=st.session_state.temp_query, key="chat_query")
 
     if st.button("Enviar"):
         if query.strip():
             # Append the user's query to chat history
             st.session_state.chat_history.append({"role": "user", "content": query})
+
             try:
                 with st.spinner("Generando respuesta..."):
                     # Retrieve relevant chunks and generate a response
@@ -222,17 +227,11 @@ def chat_interface():
                     # Append the assistant's response to chat history
                     st.session_state.chat_history.append({"role": "assistant", "content": response})
 
-                    # Display the new response immediately
-                    st.markdown(f'<div class="user-message">You: {query}</div>', unsafe_allow_html=True)
-                    st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {response}</div>', unsafe_allow_html=True)
-
             except Exception as e:
-                error_message = f"Error generating response: {str(e)}"
-                st.session_state.chat_history.append({"role": "assistant", "content": error_message})
-                st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {error_message}</div>', unsafe_allow_html=True)
+                st.error(f"Error generating response: {str(e)}")
 
-            # Clear the input field after sending
-            st.session_state.chat_query = ""
+            # Reset the temp query
+            st.session_state.temp_query = ""
         else:
             st.error("Please enter a message.")
 
