@@ -218,8 +218,7 @@ def chat_interface():
             # Generate response and append it
             try:
                 with st.container():
-                    chat_history = st.session_state.chat_history
-                    for message in chat_history:
+                    for message in st.session_state.chat_history:
                         role = message["role"]
                         content = message["content"]
                         if role == "user":
