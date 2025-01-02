@@ -204,9 +204,6 @@ def chat_interface():
             else:
                 st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {content}</div>', unsafe_allow_html=True)
 
- # Clear the input field
-                st.session_state.chat_query = ""  # Clear the input field
-
     # Input for user query
     query = st.text_input("Escribe tu mensaje", key="chat_query", value="")
 
@@ -228,6 +225,9 @@ def chat_interface():
                     # Append the assistant's response to chat history
                     st.session_state.chat_history.append({"role": "assistant", "content": response})
 
+                    # Clear the input field
+                    st.session_state.chat_query = ""
+                    
                 # Refresh the chat history dynamically
                 with chat_placeholder.container():
                     for message in st.session_state.chat_history:
@@ -238,8 +238,7 @@ def chat_interface():
                         else:
                             st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {content}</div>', unsafe_allow_html=True)
 
-                    # Clear the input field
-                   # st.session_state.chat_query = ""  # Clear the input field
+
 
             except Exception as e:
                 st.error(f"Error generating response: {str(e)}")
