@@ -119,24 +119,18 @@ def initialize_session_state():
 def admin_interface():
     st.sidebar.markdown("### Panel del Admin")
 
-
-  # Show the admin panel only when in admin mode
+    # Show the admin panel only when in admin mode
     if st.session_state.admin_mode:
         # Client selection
         client = st.sidebar.selectbox(
-            "Selecciona tu assitente",
-            options=["Selecciona tu assitente"] + list(st.session_state.document_sets.keys())
+            "Selecciona tu asistente",
+            options=["Selecciona tu asistente"] + list(st.session_state.document_sets.keys())
         )
 
-    if client != "Seleciona asistente":
-        st.session_state.current_client = client
-        st.session_state.uploaded_documents = st.session_state.document_sets[client]
+        if client != "Selecciona tu asistente":
+            st.session_state.current_client = client
+            st.session_state.uploaded_documents = st.session_state.document_sets.get(client, [])
 
-      #  if st.sidebar.button("Abre el modo Chat"):
-       #     st.session_state.admin_mode = False
-        #    st.session_state.chat_mode = True
-
-        if st.session_state.current_client:
             st.sidebar.markdown("### Documentos seleccionados")
             for doc in st.session_state.uploaded_documents:
                 st.sidebar.markdown(f"- [**{doc['name']}**]({doc['url']})", unsafe_allow_html=True)
