@@ -213,7 +213,7 @@ def chat_interface():
         if query.strip():
             try:
             # Append the user's query to chat history
-          #  st.session_state.chat_history.append({"role": "user", "content": query})
+                st.session_state.chat_history.append({"role": "user", "content": query})
 
                 with st.spinner("Generando respuesta..."):
                     # Retrieve relevant chunks and generate a response
