@@ -194,58 +194,47 @@ def chat_interface():
         return
 
     # Display chat history
-    with st.container():
-        chat_history = st.session_state.chat_history
-        for message in chat_history:
-            role = message["role"]
-            content = message["content"]
-            if role == "user":
-                st.markdown(f'<div class="user-message">You: {content}</div>', unsafe_allow_html=True)
-            else:
-                st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {content}</div>', unsafe_allow_html=True)
+    for message in st.session_state.chat_history:
+        role = message["role"]
+        content = message["content"]
+        if role == "user":
+            st.markdown(f'<div class="user-message">You: {content}</div>', unsafe_allow_html=True)
+        else:
+            st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {content}</div>', unsafe_allow_html=True)
 
     # Input for user query
-    if "current_query" not in st.session_state:
-        st.session_state.current_query = ""
-
-    query = st.text_input("Escribe tu mensaje", value=st.session_state.current_query, key="chat_query")
+    query = st.text_input("Escribe tu mensaje", key="chat_query")
 
     if st.button("Enviar"):
         if query.strip():
-            # Append the user's query to chat history immediately
+            # Append the user's query to chat history
             st.session_state.chat_history.append({"role": "user", "content": query})
-
-            # Generate response and append it
             try:
                 with st.spinner("Generando respuesta..."):
+                    # Retrieve relevant chunks and generate a response
                     chunks = st.session_state.pipeline.retrieve_chunks(query)
                     if not chunks:
                         response = "No relevant information found."
                     else:
-                         
                         system_prompt = st.session_state.pipeline.create_system_prompt(chunks)
                         response = st.session_state.pipeline.generate_response(system_prompt, query)
 
+                    # Append the assistant's response to chat history
                     st.session_state.chat_history.append({"role": "assistant", "content": response})
 
+                    # Display the new response immediately
+                    st.markdown(f'<div class="user-message">You: {query}</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {response}</div>', unsafe_allow_html=True)
+
             except Exception as e:
-                st.session_state.chat_history.append({"role": "assistant", "content": f"Error: {str(e)}"})
+                error_message = f"Error generating response: {str(e)}"
+                st.session_state.chat_history.append({"role": "assistant", "content": error_message})
+                st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {error_message}</div>', unsafe_allow_html=True)
 
             # Clear the input field after sending
-            st.session_state.current_query = ""
+            st.session_state.chat_query = ""
         else:
             st.error("Please enter a message.")
-
-    # Re-display chat history to update the UI
-   # with st.container():
-      #  for message in st.session_state.chat_history:
-      #      role = message["role"]
-      #      content = message["content"]
-     #       if role == "user":
-    #            st.markdown(f'<div class="user-message">You: {content}</div>', unsafe_allow_html=True)
-   #         else:
-  #              st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {content}</div>', unsafe_allow_html=True)
-
 
 def main():
     st.set_page_config(page_title="Client Chat System",
