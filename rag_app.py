@@ -121,22 +121,23 @@ def admin_interface():
 
     # Client selection
     client = st.sidebar.selectbox(
-        "Select Client",
-        options=["Select a Client"] + list(st.session_state.document_sets.keys())
+        "Selecciona tu assitente",
+        options=["Seleciona asistente"] + list(st.session_state.document_sets.keys())
     )
 
-    if client != "Select a Client":
+    if client != "Seleciona asistente":
         st.session_state.current_client = client
         st.session_state.uploaded_documents = st.session_state.document_sets[client]
 
-        if st.sidebar.button("Switch to Chat Mode"):
+        if st.sidebar.button("Abre el modo Chat"):
             st.session_state.admin_mode = False
             st.session_state.chat_mode = True
 
-    if st.session_state.current_client:
-        st.sidebar.markdown("### Selected Documents")
-        for doc in st.session_state.uploaded_documents:
-            st.sidebar.markdown(f"- **{doc['name']}** ({doc['url']})")
+        if st.session_state.current_client:
+            st.sidebar.markdown("### Documentos seleccionados")
+            for doc in st.session_state.uploaded_documents:
+                st.sidebar.markdown(f"- [**{doc['name']}**]({doc['url']})", unsafe_allow_html=True)
+
 
 
 def chat_interface():
@@ -149,7 +150,7 @@ def chat_interface():
             margin-bottom: 10px;
         }
         .ai-message {
-            color: darkblue;
+            color: black;
             font-weight: bold;
             margin-bottom: 10px;
         }
