@@ -204,15 +204,17 @@ def chat_interface():
             else:
                 st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {content}</div>', unsafe_allow_html=True)
 
-    # Input for user query
-    query = st.text_input("Escribe tu mensaje", key="chat_query", value="")
+    # Input and form for handling Enter or button click
+    with st.form(key="chat_form", clear_on_submit=True):
+        query = st.text_input("Escribe tu mensaje", value="", key="chat_query")
+        submit_button = st.form_submit_button("Enviar")
 
-    if st.button("Enviar"):
+    if submit_button:
         if query.strip():
-            # Append the user's query to chat history
-            st.session_state.chat_history.append({"role": "user", "content": query})
-
             try:
+            # Append the user's query to chat history
+          #  st.session_state.chat_history.append({"role": "user", "content": query})
+
                 with st.spinner("Generando respuesta..."):
                     # Retrieve relevant chunks and generate a response
                     chunks = st.session_state.pipeline.retrieve_chunks(query)
