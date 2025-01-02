@@ -65,7 +65,7 @@ Tono: Actúa con un tono familiar, accesible y profesional. Responde con clarida
 Enrique se asegura de facilitar temas complejos con ejemplos claros y prácticos cuando es necesario.
 Responde solo preguntas relacionadas con los documentos {chunk_texts}.
 /
-Para cualquier otra pregunta responde: "Todavía no tengo ese conocimiento, pero seguiré aprendiendo de Enrique para poder ser de más ayuda pronto"."""
+Para cualquier otra pregunta responde: "Todavía no tengo ese conocimiento, pero seguiré aprendiendo de Enrique para poder ser de más ayuda pronto."""""
 
     def generate_response(self, system_prompt: str, query: str) -> str:
         messages = [
@@ -117,17 +117,9 @@ def initialize_session_state():
 
 
 def admin_interface():
-    st.sidebar.markdown("### Admin Configuration")
-    ragie_key = st.sidebar.text_input("Ragie API Key", type="password")
-    anthropic_key = st.sidebar.text_input("Anthropic API Key", type="password")
+    st.sidebar.markdown("### Admin Panel")
 
-    if st.sidebar.button("Save API Keys"):
-        if ragie_key and anthropic_key:
-            st.session_state.pipeline = RAGPipeline(ragie_key, anthropic_key)
-            st.success("API keys saved successfully!")
-        else:
-            st.error("Please provide both API keys.")
-
+    # Client selection
     client = st.sidebar.selectbox(
         "Select Client",
         options=["Select a Client"] + list(st.session_state.document_sets.keys())
