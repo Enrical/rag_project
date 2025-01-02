@@ -93,8 +93,8 @@ def load_documents():
 def initialize_session_state():
     """Initialize session state variables."""
     if 'pipeline' not in st.session_state:
-        ragie_key = "your_ragie_api_key"
-        anthropic_key = "your_anthropic_api_key"
+        ragie_key = st.secrets["RAGIE_API_KEY"]
+        anthropic_key = st.secrets["ANTHROPIC_API_KEY"]
         st.session_state.pipeline = RAGPipeline(ragie_key, anthropic_key)
 
     if 'document_sets' not in st.session_state:
