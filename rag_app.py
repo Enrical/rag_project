@@ -21,6 +21,7 @@ def check_password():
                 st.error("Invalid password. Please try again.")
         st.stop()
 
+
 class RAGPipeline:
     def __init__(self, ragie_api_key: str, anthropic_api_key: str):
         self.ragie_api_key = ragie_api_key
@@ -69,31 +70,28 @@ class RAGPipeline:
 
     def create_system_prompt(self, chunk_texts: List[str]) -> str:
         return f"""Este asistente, Enrique, es el asistente interno de la Gestoría Mays para el puesto de gerente de la Gestoría.
-/
-Personalidad:
-Estructurado, con capacidad para manejar sistemas y herramientas administrativas, y con una actitud proactiva hacia la mejora de procesos. A la vez, demuestra una cierta flexibilidad y empatía en la gestión del equipo, asegurándose de que haya consenso y evitando conflictos innecesarios.
-/
-Objetivo: Responder preguntas sobre los documentos a los que tengo acceso de manera precisa y explicando con cercanía y familiaridad.
-/
-Tono: Actúa con un tono familiar, gracioso, accesible y profesional. Responde con claridad y precisión, ofreciendo primero una respuesta breve y directa a las preguntas. Al terminar esta explicación haz una pregunta para amplíar la información o profundizar en el tema. Da respuestas claras cuando la información esté disponible.
-/
-Enrique se asegura de facilitar temas complejos con ejemplos claros y prácticos cuando es necesario.
-Responde solo preguntas relacionadas con los documentos {chunk_texts}.
-/
-Para cualquier otra pregunta responde: "Todavía no tengo ese conocimiento, pero seguiré aprendiendo de Enrique para poder ser de más ayuda pronto."""""
+        /
+        Personalidad:
+        Estructurado, con capacidad para manejar sistemas y herramientas administrativas, y con una actitud proactiva hacia la mejora de procesos. A la vez, demuestra una cierta flexibilidad y empatía en la gestión del equipo, asegurándose de que haya consenso y evitando conflictos innecesarios.
+        /
+        Objetivo: Responder preguntas sobre los documentos a los que tengo acceso de manera precisa y explicando con cercanía y familiaridad.
+        /
+        Enrique responde solo preguntas relacionadas con los documentos: {chunk_texts}.
+        /
+        Para cualquier otra pregunta responde: "Todavía no tengo ese conocimiento, pero seguiré aprendiendo para poder ser de más ayuda pronto."""
 
+    def generate_response(self, system_prompt: str, query: str) -> str:
+        """Generate a response using Anthropic's Claude API."""
+        try:
+            response = self.anthropic_client.completions.create(
+                model="claude-3-sonnet-20240229",
+                max_tokens_to_sample=1024,
+                prompt=f"{system_prompt}\n\nUser: {query}\nAssistant:"
+            )
+            return response["completion"].strip()
+        except Exception as e:
+            raise Exception(f"Failed to generate response: {str(e)}")
 
-def generate_response(self, system_prompt: str, query: str) -> str:
-    """Generate a response using Anthropic's Claude API."""
-    try:
-        response = self.anthropic_client.completions.create(
-            model="claude-3-sonnet-20240229",
-            max_tokens_to_sample=1024,
-            prompt=f"{system_prompt}\n\nUser: {query}\nAssistant:"
-        )
-        return response["completion"].strip()
-    except Exception as e:
-        raise Exception(f"Failed to generate response: {str(e)}")
 
 def load_documents():
     """Load documents from a JSON file."""
@@ -134,7 +132,6 @@ def initialize_session_state():
 def admin_interface():
     st.sidebar.markdown("### Panel del Admin")
 
-    # Show the admin panel only when in admin mode
     if st.session_state.admin_mode:
         client = st.sidebar.selectbox(
             "Selecciona tu asistente",
@@ -159,16 +156,8 @@ def chat_interface():
     st.markdown(
         """
         <style>
-        .user-message {
-            color: black;
-            font-weight: normal;
-            margin-bottom: 10px;
-        }
-        .ai-message {
-            color: black;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
+        .user-message { color: black; font-weight: normal; margin-bottom: 10px; }
+        .ai-message { color: black; font-weight: bold; margin-bottom: 10px; }
         </style>
         """,
         unsafe_allow_html=True
@@ -206,9 +195,6 @@ def chat_interface():
                     st.session_state.chat_history.append({"role": "user", "content": query})
                     st.session_state.chat_history.append({"role": "assistant", "content": response})
 
-                    st.markdown(f'<div class="user-message">You: {query}</div>', unsafe_allow_html=True)
-                    st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {response}</div>', unsafe_allow_html=True)
-
             except Exception as e:
                 st.error(f"Error generating response: {str(e)}")
         else:
@@ -220,11 +206,8 @@ def main():
                        page_icon="https://essent-ia.com/wp-content/uploads/2024/11/cropped-cropped-Picture1.png",
                        layout="centered")
 
-    check_password()  # Ensure the user enters the correct password before proceeding
-
+    check_password()
     initialize_session_state()
-
-    # Admin panel is always accessible in the sidebar
     admin_interface()
 
     if st.session_state.chat_mode:
