@@ -14,7 +14,7 @@ def check_password():
     if not st.session_state.password_verified:
         st.text_input("Enter Password", type="password", key="password_input")
         if st.button("Submit"):
-            if st.session_state.password_input == st.secrets["default"]["APP_PASSWORD"]:
+            if st.session_state.password_input == st.secrets["APP_PASSWORD"]:
                 st.session_state.password_verified = True
                 st.success("Access granted!")
             else:
