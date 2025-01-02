@@ -236,14 +236,14 @@ def chat_interface():
             st.error("Please enter a message.")
 
     # Re-display chat history to update the UI
-    with st.container():
-        for message in st.session_state.chat_history:
-            role = message["role"]
-            content = message["content"]
-            if role == "user":
-                st.markdown(f'<div class="user-message">You: {content}</div>', unsafe_allow_html=True)
-            else:
-                st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {content}</div>', unsafe_allow_html=True)
+   # with st.container():
+      #  for message in st.session_state.chat_history:
+      #      role = message["role"]
+      #      content = message["content"]
+     #       if role == "user":
+    #            st.markdown(f'<div class="user-message">You: {content}</div>', unsafe_allow_html=True)
+   #         else:
+  #              st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {content}</div>', unsafe_allow_html=True)
 
 
 def main():
