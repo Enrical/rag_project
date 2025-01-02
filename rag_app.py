@@ -135,7 +135,7 @@ def admin_interface():
     if st.session_state.admin_mode:
         client = st.sidebar.selectbox(
             "Selecciona tu asistente",
-            options=["Selecciona tu asistente"] + list(st.session_state.document_sets.keys())
+            options= list(st.session_state.document_sets.keys())
         )
 
         if client != "Selecciona tu asistente":
