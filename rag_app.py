@@ -211,7 +211,7 @@ def chat_interface():
     query = st.text_input("Escribe tu mensaje", value=st.session_state.current_query, key="chat_query")
 
     if st.button("Enviar"):
-        if query.strip(chat_history):
+        if query.strip():
             # Append the user's query to chat history immediately
             st.session_state.chat_history.append({"role": "user", "content": query})
 
@@ -222,8 +222,18 @@ def chat_interface():
                     if not chunks:
                         response = "No relevant information found."
                     else:
-                        system_prompt = st.session_state.pipeline.create_system_prompt(chunks)
-                        response = st.session_state.pipeline.generate_response(system_prompt, query)
+                         with st.container():
+                            chat_history = st.session_state.chat_history
+                            for message in chat_history:
+                                role = message["role"]
+                                content = message["content"]
+                                if role == "user":
+                                    st.markdown(f'<div class="user-message">You: {content}</div>', unsafe_allow_html=True)
+                                else:
+                                    st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {content}</div>', unsafe_allow_html=True)
+
+                      #  system_prompt = st.session_state.pipeline.create_system_prompt(chunks)
+                      #  response = st.session_state.pipeline.generate_response(system_prompt, query)
 
                     st.session_state.chat_history.append({"role": "assistant", "content": response})
 
