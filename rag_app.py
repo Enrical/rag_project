@@ -155,9 +155,34 @@ def admin_interface():
 def chat_interface():
     st.markdown(
         """
-        <style>
-        .user-message { color: black; font-weight: normal; margin-bottom: 10px; }
-        .ai-message { color: black; font-weight: bold; margin-bottom: 10px; }
+         <style>
+        .user-message {
+            color: black;
+            font-weight: normal;
+            margin-bottom: 10px;
+        }
+        .ai-message {
+            color: black;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .st-key-chat_query{
+            display: flex;
+            flex-direction: column-reverse;
+            overflow-y: auto;
+            max-height: 60vh;
+        }        
+        /* Ensure child <p> elements inside .ai-message inherit the styles */
+        .ai-message p {
+        color: inherit; /* Use the color of the parent */
+        font-weight: inherit; /* Use the font weight of the parent */
+        }
+        .stButton {
+            display: flex;
+            flex-direction: column-reverse;
+            overflow-y: auto;
+            max-height: 60vh;
+        }
         </style>
         """,
         unsafe_allow_html=True
