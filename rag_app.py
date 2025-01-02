@@ -189,29 +189,29 @@ def chat_interface():
     )
 
     st.markdown("### 🕵️‍♂️ Habla con Enrique AI")
-
     if not st.session_state.pipeline:
         st.error("The system is not configured yet. Please contact the administrator.")
         return
 
-    # Display chat history
-    chat_history = st.session_state.chat_history
-    for message in chat_history:
-        role = message["role"]
-        content = message["content"]
-        if role == "user":
-            st.markdown(f'<div class="user-message">You: {content}</div>', unsafe_allow_html=True)
-        else:
-            st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {content}</div>', unsafe_allow_html=True)
+    # Display chat history dynamically
+    chat_placeholder = st.empty()  # Placeholder to dynamically update chat history
+    with chat_placeholder.container():
+        for message in st.session_state.chat_history:
+            role = message["role"]
+            content = message["content"]
+            if role == "user":
+                st.markdown(f'<div class="user-message">You: {content}</div>', unsafe_allow_html=True)
+            else:
+                st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {content}</div>', unsafe_allow_html=True)
 
     # Input for user query
-    if "current_query" not in st.session_state:
-        st.session_state.current_query = ""  # Initialize query state
-
-    query = st.text_input("Escribe tu mensaje", value=st.session_state.current_query, key="chat_query")
+    query = st.text_input("Escribe tu mensaje", key="chat_query", value="")
 
     if st.button("Enviar"):
         if query.strip():
+            # Append the user's query to chat history
+            st.session_state.chat_history.append({"role": "user", "content": query})
+
             try:
                 with st.spinner("Generando respuesta..."):
                     # Retrieve relevant chunks and generate a response
@@ -222,12 +222,22 @@ def chat_interface():
                         system_prompt = st.session_state.pipeline.create_system_prompt(chunks)
                         response = st.session_state.pipeline.generate_response(system_prompt, query)
 
-                    # Update chat history
-                    st.session_state.chat_history.append({"role": "user", "content": query})
+                    # Append the assistant's response to chat history
                     st.session_state.chat_history.append({"role": "assistant", "content": response})
 
+
+                # Refresh the chat history dynamically
+                with chat_placeholder.container():
+                    for message in st.session_state.chat_history:
+                        role = message["role"]
+                        content = message["content"]
+                        if role == "user":
+                            st.markdown(f'<div class="user-message">You: {content}</div>', unsafe_allow_html=True)
+                        else:
+                            st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {content}</div>', unsafe_allow_html=True)
+
                     # Clear the input field
-                    st.session_state.current_query = ""  # Use a separate state variable to clear input
+                    st.session_state.chat_query = ""
 
             except Exception as e:
                 st.error(f"Error generating response: {str(e)}")
