@@ -217,23 +217,24 @@ def chat_interface():
 
             # Generate response and append it
             try:
+                with st.container():
+                    chat_history = st.session_state.chat_history
+                    for message in chat_history:
+                        role = message["role"]
+                        content = message["content"]
+                        if role == "user":
+                            st.markdown(f'<div class="user-message">You: {content}</div>', unsafe_allow_html=True)
+                        else:
+                            st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {content}</div>', unsafe_allow_html=True)
+
                 with st.spinner("Generando respuesta..."):
                     chunks = st.session_state.pipeline.retrieve_chunks(query)
                     if not chunks:
                         response = "No relevant information found."
                     else:
-                         with st.container():
-                            chat_history = st.session_state.chat_history
-                            for message in chat_history:
-                                role = message["role"]
-                                content = message["content"]
-                                if role == "user":
-                                    st.markdown(f'<div class="user-message">You: {content}</div>', unsafe_allow_html=True)
-                                else:
-                                    st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {content}</div>', unsafe_allow_html=True)
-
-                      #  system_prompt = st.session_state.pipeline.create_system_prompt(chunks)
-                      #  response = st.session_state.pipeline.generate_response(system_prompt, query)
+                         
+                        system_prompt = st.session_state.pipeline.create_system_prompt(chunks)
+                        response = st.session_state.pipeline.generate_response(system_prompt, query)
 
                     st.session_state.chat_history.append({"role": "assistant", "content": response})
 
