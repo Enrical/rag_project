@@ -225,8 +225,7 @@ def chat_interface():
                     st.session_state.chat_history.append({"role": "user", "content": query})
                     st.session_state.chat_history.append({"role": "assistant", "content": response})
 
-                    # Force rerun to refresh the chat history
-                    st.experimental_rerun()
+
 
             except Exception as e:
                 st.error(f"Error generating response: {str(e)}")
