@@ -85,12 +85,15 @@ Para cualquier otra pregunta responde: "Todavía no tengo ese conocimiento, pero
 
 def generate_response(self, system_prompt: str, query: str) -> str:
     """Generate a response using Anthropic's Claude API."""
-    response = self.anthropic_client.completions.create(
-        model="claude-3-sonnet-20240229",
-        max_tokens_to_sample=1024,
-        prompt=f"{system_prompt}\n\nUser: {query}\nAssistant:"
-    )
-    return response.completion.strip()
+    try:
+        response = self.anthropic_client.completions.create(
+            model="claude-3-sonnet-20240229",
+            max_tokens_to_sample=1024,
+            prompt=f"{system_prompt}\n\nUser: {query}\nAssistant:"
+        )
+        return response["completion"].strip()
+    except Exception as e:
+        raise Exception(f"Failed to generate response: {str(e)}")
 
 def load_documents():
     """Load documents from a JSON file."""
@@ -192,7 +195,7 @@ def chat_interface():
     if st.button("Enviar"):
         if query.strip():
             try:
-                with st.spinner("Generating response..."):
+                with st.spinner("Generando respuesta..."):
                     chunks = st.session_state.pipeline.retrieve_chunks(query)
                     if not chunks:
                         response = "No relevant information found."
