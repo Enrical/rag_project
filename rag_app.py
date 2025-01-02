@@ -119,24 +119,33 @@ def initialize_session_state():
 def admin_interface():
     st.sidebar.markdown("### Panel del Admin")
 
-    # Client selection
-    client = st.sidebar.selectbox(
-        "Selecciona tu assitente",
-        options=["Seleciona asistente"] + list(st.session_state.document_sets.keys())
-    )
+
+  # Show the admin panel only when in admin mode
+    if st.session_state.admin_mode:
+        # Client selection
+        client = st.sidebar.selectbox(
+            "Selecciona tu assitente",
+            options=["Selecciona tu assitente"] + list(st.session_state.document_sets.keys())
+        )
 
     if client != "Seleciona asistente":
         st.session_state.current_client = client
         st.session_state.uploaded_documents = st.session_state.document_sets[client]
 
-        if st.sidebar.button("Abre el modo Chat"):
-            st.session_state.admin_mode = False
-            st.session_state.chat_mode = True
+      #  if st.sidebar.button("Abre el modo Chat"):
+       #     st.session_state.admin_mode = False
+        #    st.session_state.chat_mode = True
 
         if st.session_state.current_client:
             st.sidebar.markdown("### Documentos seleccionados")
             for doc in st.session_state.uploaded_documents:
                 st.sidebar.markdown(f"- [**{doc['name']}**]({doc['url']})", unsafe_allow_html=True)
+
+    # Add a toggle button to switch between admin and chat modes
+    toggle_button_label = "Switch to Chat Mode" if st.session_state.admin_mode else "Switch to Admin Mode"
+    if st.sidebar.button(toggle_button_label):
+        st.session_state.admin_mode = not st.session_state.admin_mode
+        st.session_state.chat_mode = not st.session_state.chat_mode
 
 
 
@@ -225,14 +234,15 @@ def main():
                        layout="centered")
     initialize_session_state()
 
-    if st.session_state.admin_mode:
-        admin_interface()
-    elif st.session_state.chat_mode:
+    # Admin panel is always accessible in the sidebar
+    admin_interface()
+
+    if st.session_state.chat_mode:
         chat_interface()
 
-    if st.button("Cambiar a modo Admin"):
-        st.session_state.chat_mode = False
-        st.session_state.admin_mode = True
+  #  if st.button("Cambiar a modo Admin"):
+   #     st.session_state.chat_mode = False
+    #    st.session_state.admin_mode = True
 
 if __name__ == "__main__":
     main()
