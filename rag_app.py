@@ -15,6 +15,14 @@ class RAGPipeline:
         self.RAGIE_UPLOAD_URL = "https://api.ragie.ai/documents/url"
         self.RAGIE_RETRIEVAL_URL = "https://api.ragie.ai/retrievals"
 
+    def load_css(file_path: str):
+        """Load a CSS file into the app."""
+        with open(file_path, "r") as f:
+            st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
+    # Call this function in your app
+    load_css("styles.css")  # Adjust the path if needed
+
     def upload_document(self, url: str, name: Optional[str] = None, mode: str = "fast") -> Dict:
         if not name:
             name = urlparse(url).path.split('/')[-1] or "document"
@@ -217,11 +225,13 @@ def chat_interface():
             st.error("Please enter a message.")
 
 
-
 def main():
-    st.set_page_config(page_title="Client Chat System",
-                       page_icon="https://essent-ia.com/wp-content/uploads/2024/11/cropped-cropped-Picture1.png",
-                       layout="centered")
+    st.set_page_config(
+        page_title="Client Chat System",
+        page_icon="https://essent-ia.com/wp-content/uploads/2024/11/cropped-cropped-Picture1.png",
+        layout="centered"
+    )
+    load_css("styles.css")  # Load the CSS file
     initialize_session_state()
 
     if st.session_state.admin_mode:
