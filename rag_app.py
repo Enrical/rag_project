@@ -211,7 +211,7 @@ def chat_interface():
     query = st.text_input("Escribe tu mensaje", value=st.session_state.current_query, key="chat_query")
 
     if st.button("Enviar"):
-        if query.strip():
+        if query.strip(chat_history):
             # Append the user's query to chat history immediately
             st.session_state.chat_history.append({"role": "user", "content": query})
 
