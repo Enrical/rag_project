@@ -5,8 +5,6 @@ from urllib.parse import urlparse
 from typing import List, Dict, Optional
 import json
 
-PASSWORD = "Enrique"  # Replace with your secure password
-
 
 def check_password():
     """Display a password input box and verify access."""
@@ -16,7 +14,7 @@ def check_password():
     if not st.session_state.password_verified:
         st.text_input("Enter Password", type="password", key="password_input")
         if st.button("Submit"):
-            if st.session_state.password_input == PASSWORD:
+            if st.session_state.password_input == st.secrets["default"]["APP_PASSWORD"]:
                 st.session_state.password_verified = True
                 st.success("Access granted!")
             else:
@@ -211,9 +209,11 @@ def main():
                        page_icon="https://essent-ia.com/wp-content/uploads/2024/11/cropped-cropped-Picture1.png",
                        layout="centered")
 
-    check_password()  # Ensure password is verified first
+    check_password()  # Ensure the user enters the correct password before proceeding
+
     initialize_session_state()
 
+    # Admin panel is always accessible in the sidebar
     admin_interface()
 
     if st.session_state.chat_mode:
