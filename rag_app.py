@@ -117,7 +117,7 @@ def initialize_session_state():
 
 
 def admin_interface():
-    st.sidebar.markdown("### Admin Panel")
+    st.sidebar.markdown("### Panel del Admin")
 
     # Client selection
     client = st.sidebar.selectbox(
@@ -229,7 +229,7 @@ def main():
     elif st.session_state.chat_mode:
         chat_interface()
 
-    if st.button("Switch to Admin Mode"):
+    if st.button("Cambiar a modo Admin"):
         st.session_state.chat_mode = False
         st.session_state.admin_mode = True
 
