@@ -18,6 +18,7 @@ def check_password():
                 st.session_state.password_verified = True
                 st.session_state.admin_mode = True  # Automatically enable admin mode
                 st.success("Accesso garantizado! Clica en enviar de nuevo")
+                st.admin_interface()
             else:
                 st.error("Contraseña incorrecta. Intentalo de nuevo.")
         st.stop()
