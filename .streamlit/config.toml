@@ -1,11 +1,5 @@
 [theme]
 base = "light"
 
-[browser]
-gatherUsageStats = false
-
-[global]
-disableWatchdogWarning = true
-
-[ui]
-hideStreamlitBranding = true
+[client]
+toolbarMode = "minimal"
