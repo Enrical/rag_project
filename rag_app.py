@@ -18,6 +18,7 @@ def check_password():
                 st.session_state.password_verified = True
                 st.session_state.admin_mode = True  # Automatically enable admin mode
                 st.success("Acceso concedido! Clica en Enviar para continuar")
+                st.button("continuar")
             else:
                 st.error("Invalid password. Please try again.")
         st.stop()
