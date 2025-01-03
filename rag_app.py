@@ -17,6 +17,7 @@ def check_password():
             if st.session_state.password_input == st.secrets["APP_PASSWORD"]:
                 st.session_state.password_verified = True
                 st.success("Accesso garantizado! Clica en enviar de nuevo")
+                st.experimental_rerun()
             else:
                 st.error("Contraseña incorrecta. Intentalo de nuevo.")
         st.stop()
