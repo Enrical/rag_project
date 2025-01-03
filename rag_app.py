@@ -16,9 +16,9 @@ def check_password():
         if st.button("enviar"):
             if st.session_state.password_input == st.secrets["APP_PASSWORD"]:
                 st.session_state.password_verified = True
-                st.success("Access granted!")
+                st.success("Accesso garantizado! Clica en enviar de nuevo")
             else:
-                st.error("Invalid password. Please try again.")
+                st.error("Contraseña incorrecta. Intentalo de nuevo.")
         st.stop()
 
 
@@ -130,7 +130,7 @@ def initialize_session_state():
 
 
 def admin_interface():
-    st.sidebar.markdown("### Panel del Admin")
+    st.sidebar.markdown("### Panel del Administración")
 
     if st.session_state.admin_mode:
         client = st.sidebar.selectbox(
