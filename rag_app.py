@@ -18,7 +18,6 @@ def check_password():
                 st.session_state.password_verified = True
                 st.session_state.admin_mode = True  # Automatically enable admin mode
                 st.success("Access granted!")
-                st.experimental_rerun()  # Trigger a rerun to immediately show the admin panel
             else:
                 st.error("Invalid password. Please try again.")
         st.stop()
