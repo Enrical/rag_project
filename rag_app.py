@@ -90,7 +90,6 @@ class RAGPipeline:
             model="claude-3-sonnet-20240229",
             max_tokens=1024,
             system=system_prompt,
-            stream=True,
             messages=messages
         )
         return response.content[0].text
