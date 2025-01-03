@@ -17,7 +17,7 @@ def check_password():
             if st.session_state.password_input == st.secrets["APP_PASSWORD"]:
                 st.session_state.password_verified = True
                 st.session_state.admin_mode = True  # Automatically enable admin mode
-                st.success("Access granted!")
+                st.success("Acceso concedido! Clica en Enviar para continuar")
             else:
                 st.error("Invalid password. Please try again.")
         st.stop()
