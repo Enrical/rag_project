@@ -146,7 +146,7 @@ def admin_interface():
             for doc in st.session_state.uploaded_documents:
                 st.sidebar.markdown(f"- [**{doc['name']}**]({doc['url']})", unsafe_allow_html=True)
 
-    toggle_button_label = "Switch to Chat Mode" if st.session_state.admin_mode else "Switch to Admin Mode"
+    toggle_button_label = "Comenzar Chat" if st.session_state.admin_mode else "Cambiar al modo Admin"
     if st.sidebar.button(toggle_button_label):
         st.session_state.admin_mode = not st.session_state.admin_mode
         st.session_state.chat_mode = not st.session_state.chat_mode
