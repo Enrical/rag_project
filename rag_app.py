@@ -14,10 +14,11 @@ def check_password():
     if not st.session_state.password_verified:
         st.text_input("Escribe tu contraseña", type="password", key="password_input")
         if st.button("Enviar"):
-            if password == st.secrets["APP_PASSWORD"]:
+            if st.session_state.password_input == st.secrets["APP_PASSWORD"]:
                 st.session_state.password_verified = True
                 st.session_state.admin_mode = True  # Automatically enable admin mode
                 st.success("Access granted!")
+                st.experimental_rerun()  # Trigger a rerun to immediately show the admin panel
             else:
                 st.error("Invalid password. Please try again.")
         st.stop()
