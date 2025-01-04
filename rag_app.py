@@ -253,10 +253,10 @@ def chat_interface():
                     # Clear the input field
                     #st.session_state.chat_query = ""
 
-            except Exception as e:
-                st.error(f"Error generating response: {str(e)}")
-        else:
-            st.error("Please enter a message.")
+   #         except Exception as e:
+    #            st.error(f"Error generating response: {str(e)}")
+     #   else:
+      #      st.error("Please enter a message.")
 
 def main():
     st.set_page_config(page_title="Client Chat System",
