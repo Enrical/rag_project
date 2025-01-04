@@ -82,17 +82,17 @@ class RAGPipeline:
         /
         Para cualquier otra pregunta responde: "Todavía no tengo ese conocimiento, pero seguiré aprendiendo para poder ser de más ayuda pronto."""
 
-def generate_response(self, system_prompt: str, query: str) -> str:
-        messages = [
-            {"role": "user", "content": query}
-        ]
-        response = self.anthropic_client.messages.create(
-            model="claude-3-sonnet-20240229",
-            max_tokens=1024,
-            system=system_prompt,
-            messages=messages
-        )
-        return response.content[0].text
+    def generate_response(self, system_prompt: str, query: str) -> str:
+            messages = [
+                {"role": "user", "content": query}
+            ]
+            response = self.anthropic_client.messages.create(
+                model="claude-3-sonnet-20240229",
+                max_tokens=1024,
+                system=system_prompt,
+                messages=messages
+            )
+            return response.content[0].text
 
 
 def load_documents():
