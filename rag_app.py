@@ -136,24 +136,18 @@ def initialize_session_state():
 
 def admin_interface():
     st.sidebar.markdown("### Panel del Administración")
-    if st.session_state.admin_mode:
-    client = st.sidebar.selectbox(
-        "Selecciona tu asistente",
-        options= list(st.session_state.document_sets.keys())
-    )
-
-        if client != "Selecciona tu asistente":
-            st.session_state.current_client = client
-            st.session_state.uploaded_documents = st.session_state.document_sets.get(client, [])
-
-            st.sidebar.markdown("### Documentos seleccionados")
-            for doc in st.session_state.uploaded_documents:
-                st.sidebar.markdown(f"- [**{doc['name']}**]({doc['url']})", unsafe_allow_html=True)
-
     if st.sidebar.button("Nueva Conversación"):
         new_id = f"Conversación {len(st.session_state.conversations) + 1}"
         st.session_state.conversations[new_id] = []
         st.session_state.current_conversation = new_id
+
+    if client != "Selecciona tu asistente":
+        st.session_state.current_client = client
+        st.session_state.uploaded_documents = st.session_state.document_sets.get(client, [])
+
+        st.sidebar.markdown("### Documentos seleccionados")
+        for doc in st.session_state.uploaded_documents:
+            st.sidebar.markdown(f"- [**{doc['name']}**]({doc['url']})", unsafe_allow_html=True)
 
     conversation_list = list(st.session_state.conversations.keys())
     if conversation_list:
