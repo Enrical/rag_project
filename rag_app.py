@@ -241,17 +241,24 @@ def chat_interface():
 
 
                 # Refresh the chat history dynamically
+  #              with chat_placeholder.container():
+   #                 for message in st.session_state.chat_history:
+    #                    role = message["role"]
+     #                   content = message["content"]
+      #                  if role == "user":
+       #                     st.markdown(f'<div class="user-message">You: {content}</div>', unsafe_allow_html=True)
+        #                else:
+         #                   st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {content}</div>', unsafe_allow_html=True)
+
+                # Refresh the chat
                 with chat_placeholder.container():
-                    for message in st.session_state.chat_history:
+                    for message in current_history:
                         role = message["role"]
                         content = message["content"]
                         if role == "user":
-                            st.markdown(f'<div class="user-message">You: {content}</div>', unsafe_allow_html=True)
+                            st.markdown(f"You: {content}")
                         else:
-                            st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {content}</div>', unsafe_allow_html=True)
-
-                    # Clear the input field
-                    #st.session_state.chat_query = ""
+                            st.markdown(f"AI: {content}")
 
    #         except Exception as e:
     #            st.error(f"Error generating response: {str(e)}")
