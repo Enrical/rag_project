@@ -140,8 +140,6 @@ def admin_interface():
         new_id = f"Conversación {len(st.session_state.conversations) + 1}"
         st.session_state.conversations[new_id] = []
         st.session_state.current_conversation = new_id
-
-    if client != "Selecciona tu asistente":
         st.session_state.current_client = client
         st.session_state.uploaded_documents = st.session_state.document_sets.get(client, [])
 
