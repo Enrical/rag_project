@@ -92,7 +92,7 @@ def generate_response(self, system_prompt: str, query: str, conversation_history
         model="claude-3-sonnet-20240229",
         max_tokens=1024,
         system=system_prompt,
-        messages=conversation_history + messages
+        messages=messages
     )
     return response.content[0].text
 
