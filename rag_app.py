@@ -86,13 +86,13 @@ def generate_response(self, system_prompt: str, query: str, conversation_history
     if conversation_history is None:
         conversation_history = []
     
-    messages = conversation_history + [{"role": "user", "content": query}]
+    #messages = conversation_history + [{"role": "user", "content": query}]
     
     response = self.anthropic_client.messages.create(
         model="claude-3-sonnet-20240229",
         max_tokens=1024,
         system=system_prompt,
-        messages=messages
+        messages=conversation_history + messages
     )
     return response.content[0].text
 
