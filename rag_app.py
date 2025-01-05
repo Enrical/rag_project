@@ -203,7 +203,7 @@ def chat_interface():
         st.info("Por favor selecciona o crea una nueva conversación.")
         return
 
-    current_history = st.session_state.conversations[st.session_state.current_conversation]
+    #current_history = st.session_state.conversations[st.session_state.current_conversation]
     chat_placeholder = st.empty()
     with chat_placeholder.container():
         for message in current_history:
