@@ -233,7 +233,7 @@ def chat_interface():
 
     if submit_button:
         if query.strip():
-            current_history.append({"role": "user", "content": query})
+          #  current_history.append({"role": "user", "content": query})
             with st.spinner("Generando respuesta..."):
                 chunks = st.session_state.pipeline.retrieve_chunks(query)
                 if chunks:
