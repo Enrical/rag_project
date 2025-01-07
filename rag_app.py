@@ -258,8 +258,8 @@ def chat_interface():
                 # Refresh the chat
                 with chat_placeholder.container():
                     for message in current_history:
-                        role = message["role"]
-                        content = message["content"]
+  #                      role = message["role"]
+   #                     content = message["content"]
                         if role == "user":
                             st.markdown(f"You: {content}")
                         else:
