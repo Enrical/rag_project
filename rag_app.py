@@ -188,16 +188,15 @@ def chat_interface():
 
     # Get the current conversation's history
     current_history = st.session_state.conversations[st.session_state.current_conversation]
-    
-    # Display only the latest message and reply
+
+    # Display the full chat history
     chat_placeholder = st.empty()  # Placeholder to dynamically update the chat
     with chat_placeholder.container():
-        if current_history:
-            last_message = current_history[-1]
-            if last_message["role"] == "user":
-                st.markdown(f'<div class="user-message">You: {last_message["content"]}</div>', unsafe_allow_html=True)
-            elif last_message["role"] == "assistant":
-                st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {last_message["content"]}</div>', unsafe_allow_html=True)
+        for message in current_history:
+            if message["role"] == "user":
+                st.markdown(f'<div class="user-message">You: {message["content"]}</div>', unsafe_allow_html=True)
+            elif message["role"] == "assistant":
+                st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {message["content"]}</div>', unsafe_allow_html=True)
 
     # Input and form for handling Enter or button click
     with st.form(key="chat_form", clear_on_submit=True):
@@ -226,13 +225,17 @@ def chat_interface():
 
                 # Update chat dynamically
                 with chat_placeholder.container():
-                    st.markdown(f'<div class="user-message">You: {query}</div>', unsafe_allow_html=True)
-                    st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {response}</div>', unsafe_allow_html=True)
+                    for message in current_history:
+                        if message["role"] == "user":
+                            st.markdown(f'<div class="user-message">You: {message["content"]}</div>', unsafe_allow_html=True)
+                        elif message["role"] == "assistant":
+                            st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {message["content"]}</div>', unsafe_allow_html=True)
 
             except Exception as e:
                 st.error(f"Error generating response: {str(e)}")
         else:
             st.error("Please enter a message.")
+
 
 def main():
     st.set_page_config(page_title="Client Chat System",
