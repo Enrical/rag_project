@@ -233,7 +233,7 @@ def chat_interface():
 
     if submit_button:
         if query.strip():
-           # current_history.append({"role": "user", "content": query})
+            current_history.append({"role": "user", "content": query})
             with st.spinner("Generando respuesta..."):
                 chunks = st.session_state.pipeline.retrieve_chunks(query)
                 if chunks:
@@ -257,14 +257,14 @@ def chat_interface():
          #                   st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {content}</div>', unsafe_allow_html=True)
 
                 # Refresh the chat
-#                with chat_placeholder.container():
- #                   for message in current_history:
-  #                      role = message["role"]
-   #                     content = message["content"]
-    #                    if role == "user":
-     #                       st.markdown(f"You: {content}")
-      #                  else:
-       #                     st.markdown(f"AI: {content}")
+                with chat_placeholder.container():
+                    for message in current_history:
+                        role = message["role"]
+                        content = message["content"]
+                        if role == "user":
+                            st.markdown(f"You: {content}")
+                        else:
+                           st.markdown(f"AI: {content}")
 
    #         except Exception as e:
     #            st.error(f"Error generating response: {str(e)}")
