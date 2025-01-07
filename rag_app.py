@@ -84,7 +84,7 @@ class RAGPipeline:
         response = self.anthropic_client.messages.create(
             model="claude-3-sonnet-20240229",
             max_tokens=1024,
-            temperature=0.7,  # Adjust creativity level
+            temperature=0.8,  # Adjust creativity level
             system=system_prompt,
             messages=messages
         )
@@ -139,7 +139,7 @@ def admin_interface():
         new_id = f"Conversación {len(st.session_state.conversations) + 1}"
         st.session_state.conversations[new_id] = []
         st.session_state.current_conversation = new_id
-        st.session_state.uploaded_documents = st.session_state.document_sets.get(id, [])
+        #st.session_state.uploaded_documents = st.session_state.document_sets.get(id, [])
 
         st.sidebar.markdown("### Documentos seleccionados")
         for doc in st.session_state.uploaded_documents:
