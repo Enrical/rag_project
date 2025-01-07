@@ -175,6 +175,11 @@ def chat_interface():
             font-weight: bold;
             margin-bottom: 10px;
         }
+        /* Ensure child <p> elements inside .ai-message inherit the styles */
+        .ai-message p {
+        color: inherit; /* Use the color of the parent */
+        font-weight: inherit; /* Use the font weight of the parent */
+        }
         </style>
         """,
         unsafe_allow_html=True
