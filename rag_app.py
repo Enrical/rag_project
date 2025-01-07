@@ -175,55 +175,29 @@ def chat_interface():
             font-weight: bold;
             margin-bottom: 10px;
         }
-        .st-key-chat_query{
-            display: flex;
-            flex-direction: column-reverse;
-            overflow-y: auto;
-            max-height: 60vh;
-        }        
-        /* Ensure child <p> elements inside .ai-message inherit the styles */
-        .ai-message p {
-        color: inherit; /* Use the color of the parent */
-        font-weight: inherit; /* Use the font weight of the parent */
-        }
-        .stButton {
-            display: flex;
-            flex-direction: column-reverse;
-            overflow-y: auto;
-            max-height: 60vh;
-        }
         </style>
         """,
         unsafe_allow_html=True
     )
 
     st.markdown("### 🕵️‍♂️ Habla con Enrique AI")
+
     if not st.session_state.current_conversation:
         st.info("Por favor selecciona o crea una nueva conversación.")
         return
 
-
+    # Get the current conversation's history
     current_history = st.session_state.conversations[st.session_state.current_conversation]
-    chat_placeholder = st.empty()
+    
+    # Display only the latest message and reply
+    chat_placeholder = st.empty()  # Placeholder to dynamically update the chat
     with chat_placeholder.container():
-        for message in current_history:
-            role = message["role"]
-            content = message["content"]
-            if role == "user":
-                st.markdown(f"You: {content}")
-            else:
-                st.markdown(f"AI: {content}")
-
-    # Display chat history dynamically
-    chat_placeholder = st.empty()  # Placeholder to dynamically update chat history
-    with chat_placeholder.container():
-        for message in st.session_state.chat_history:
-            role = message["role"]
-            content = message["content"]
-            if role == "user":
-                st.markdown(f'<div class="user-message">You: {content}</div>', unsafe_allow_html=True)
-            else:
-                st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {content}</div>', unsafe_allow_html=True)
+        if current_history:
+            last_message = current_history[-1]
+            if last_message["role"] == "user":
+                st.markdown(f'<div class="user-message">You: {last_message["content"]}</div>', unsafe_allow_html=True)
+            elif last_message["role"] == "assistant":
+                st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {last_message["content"]}</div>', unsafe_allow_html=True)
 
     # Input and form for handling Enter or button click
     with st.form(key="chat_form", clear_on_submit=True):
@@ -232,43 +206,33 @@ def chat_interface():
 
     if submit_button:
         if query.strip():
-            current_history.append({"role": "user", "content": query})
-            with st.spinner("Generando respuesta..."):
-                chunks = st.session_state.pipeline.retrieve_chunks(query)
-                if chunks:
-                    system_prompt = st.session_state.pipeline.create_system_prompt(chunks)
-                    response = st.session_state.pipeline.generate_response(
-                        system_prompt, query, current_history
-                    )
-                else:
-                    response = "No relevant information found."
-                current_history.append({"role": "assistant", "content": response})
+            try:
+                # Append user's query to the current conversation
+                current_history.append({"role": "user", "content": query})
 
+                # Generate the assistant's response
+                with st.spinner("Generando respuesta..."):
+                    chunks = st.session_state.pipeline.retrieve_chunks(query)
+                    if chunks:
+                        system_prompt = st.session_state.pipeline.create_system_prompt(chunks)
+                        response = st.session_state.pipeline.generate_response(
+                            system_prompt, query, current_history
+                        )
+                    else:
+                        response = "No relevant information found."
 
-                # Refresh the chat history dynamically
-  #              with chat_placeholder.container():
-   #                 for message in st.session_state.chat_history:
-    #                    role = message["role"]
-     #                   content = message["content"]
-      #                  if role == "user":
-       #                     st.markdown(f'<div class="user-message">You: {content}</div>', unsafe_allow_html=True)
-        #                else:
-         #                   st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {content}</div>', unsafe_allow_html=True)
+                    # Append assistant's response to the current conversation
+                    current_history.append({"role": "assistant", "content": response})
 
-                # Refresh the chat
+                # Update chat dynamically
                 with chat_placeholder.container():
-                    for message in current_history:
-                        role = message["role"]
-                        content = message["content"]
-                        if role == "user":
-                            st.markdown(f"You: {content}")
-                        else:
-                           st.markdown(f"AI: {content}")
+                    st.markdown(f'<div class="user-message">You: {query}</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {response}</div>', unsafe_allow_html=True)
 
-   #         except Exception as e:
-    #            st.error(f"Error generating response: {str(e)}")
-     #   else:
-      #      st.error("Please enter a message.")
+            except Exception as e:
+                st.error(f"Error generating response: {str(e)}")
+        else:
+            st.error("Please enter a message.")
 
 def main():
     st.set_page_config(page_title="Client Chat System",
