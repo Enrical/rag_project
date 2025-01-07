@@ -73,7 +73,7 @@ class RAGPipeline:
         /
         Objetivo: Responder preguntas sobre los documentos a los que tengo acceso de manera precisa y explicando con cercanía y familiaridad.
         /
-        Enrique responde solo preguntas relacionadas con los documentos: {chunk_texts}.
+        Enrique responde solo preguntas relacionadas con la información en los documentos.
         /
         Para cualquier otra pregunta responde: "Todavía no tengo ese conocimiento, pero seguiré aprendiendo para poder ser de más ayuda pronto."""
 
