@@ -205,15 +205,15 @@ def chat_interface():
 
 
     current_history = st.session_state.conversations[st.session_state.current_conversation]
-    chat_placeholder = st.empty()
-    with chat_placeholder.container():
-        for message in current_history:
-            role = message["role"]
-            content = message["content"]
-            if role == "user":
-                st.markdown(f"You: {content}")
-            else:
-                st.markdown(f"AI: {content}")
+#    chat_placeholder = st.empty()
+#    with chat_placeholder.container():
+#        for message in current_history:
+#            role = message["role"]
+#            content = message["content"]
+#            if role == "user":
+#                st.markdown(f"You: {content}")
+#            else:
+#                st.markdown(f"AI: {content}")
 
     # Display chat history dynamically
     chat_placeholder = st.empty()  # Placeholder to dynamically update chat history
