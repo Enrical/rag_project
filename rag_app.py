@@ -180,28 +180,29 @@ class RAGPipeline:
         if conversation_history is None:
             conversation_history = []
 
-        messages = conversation_history + [{"role": "user", "content": query}]
+    messages = conversation_history + [{"role": "user", "content": query}]
 
-        try:
-            response = self.anthropic_client.messages.create(
-                model="claude-3-sonnet-20240229",
-                max_tokens=1024,
-                system=system_prompt,
-                messages=messages
-            )
-
-            # Log the response for debugging
-            logging.debug(f"Raw API Response: {response}")
-
-            # Handle different response structures
-            if isinstance(response, dict) and "completion" in response:
-                return response["completion"].strip()
-            else:
-                raise Exception("Unexpected response format from the API.")
-
-        except Exception as e:
-            logging.error(f"Failed to generate response: {str(e)}")
-            raise Exception(f"Failed to generate response: {str(e)}")
+    try:
+        # Make the API request
+        response = self.anthropic_client.messages.create(
+            model="claude-3-sonnet-20240229",
+            max_tokens=1024,
+            system=system_prompt,
+            messages=messages
+        )
+        
+        # Log the raw response for debugging
+        logging.debug(f"Raw API response: {response}")
+        
+        # Extract the completion or handle unexpected structure
+        if "completion" in response:
+            return response["completion"].strip()
+        else:
+            raise ValueError("Unexpected response format: 'completion' key not found.")
+    except Exception as e:
+        # Log the error with raw response for debugging
+        logging.error(f"Error generating response: {str(e)}")
+        raise Exception(f"Failed to generate response: {str(e)}")
 
 
 def initialize_session_state():
