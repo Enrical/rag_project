@@ -156,34 +156,30 @@ class RAGPipeline:
         /
         Para cualquier otra pregunta responde: "Todavía no tengo ese conocimiento, pero seguiré aprendiendo para poder ser de más ayuda pronto."""
 
-    def generate_response(self, system_prompt: str, query: str, conversation_history: list = None) -> str:
-        if conversation_history is None:
-            conversation_history = []
+def generate_response(self, system_prompt: str, query: str, conversation_history: list = None) -> str:
+    if conversation_history is None:
+        conversation_history = []
 
-        messages = conversation_history + [{"role": "user", "content": query}]
+    messages = conversation_history + [{"role": "user", "content": query}]
 
-        try:
-            # Make the API request
-            response = self.anthropic_client.messages.create(
-                model="claude-3",
-                max_tokens=1024,
-                temperature=0.7,
-                top_p=0.9,
-                system=system_prompt,
-                messages=messages
-            )
+    try:
+        # Use the correct model name
+        response = self.anthropic_client.messages.create(
+            model="claude-3-sonnet-20240229",  # This is the correct model name
+            max_tokens=1024,
+            system=system_prompt,
+            messages=messages
+        )
 
-            # Log and handle unexpected API responses
-            logging.debug(f"API response: {response}")
-            
-            # Ensure the response has the expected 'completion' attribute
-            if hasattr(response, "completion"):
-                return response.completion.strip()
-            else:
-                raise ValueError(f"Unexpected response format: {response}")
-        except Exception as e:
-            logging.error(f"Error generating response: {str(e)}")
-            raise Exception(f"Failed to generate response: {str(e)}")
+        # Log the raw response for debugging
+        logging.debug(f"Raw API response: {response}")
+
+        # Extract the content from the response
+        return response.content
+        
+    except Exception as e:
+        logging.error(f"Error generating response: {str(e)}")
+        raise Exception(f"Failed to generate response: {str(e)}")
 
 
 
