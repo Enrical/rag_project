@@ -169,22 +169,21 @@ def generate_response(self, system_prompt: str, query: str, conversation_history
 
     try:
         response = self.anthropic_client.messages.create(
-            model="claude-3-sonnet-20240229",
+            model="claude-3",
             max_tokens=1024,
             system=system_prompt,
             messages=messages
         )
+        
+        logging.debug(f"Full response from API: {response}")
 
-        # Ensure the response structure is logged for debugging
-        logging.debug(f"Full API response: {response}")
-
-        # Check the response object for the completion attribute
-        if hasattr(response, "completion"):
-            return response.completion.strip()
-        elif isinstance(response, dict) and "completion" in response:
+        # Adapt to response structure
+        if isinstance(response, dict) and "completion" in response:
             return response["completion"].strip()
+        elif hasattr(response, "completion"):
+            return response.completion.strip()
         else:
-            raise Exception("Unexpected response format from API")
+            raise AttributeError("Response does not contain 'completion' attribute or key.")
 
     except Exception as e:
         logging.error(f"Failed to generate response: {str(e)}")
@@ -233,7 +232,20 @@ def chat_interface():
     query = st.text_input("Escribe tu mensaje")
     if st.button("Enviar", key="send_message_button"):
         if query.strip():
-            current_history.append({"role": "user", "content": query})
+            try:
+                # Logging inputs
+                logging.debug(f"User query: {query}")
+                logging.debug(f"Conversation history: {current_history}")
+
+                # Call generate_response
+                response = st.session_state.pipeline.generate_response(
+                    system_prompt, query, current_history
+                )
+                # Append the AI's response to conversation history
+                current_history.append({"role": "assistant", "content": response})
+                save_conversation(st.session_state.username, st.session_state.conversations)
+            except Exception as e:
+                st.error(f"Error generating response: {str(e)}")
 
             with st.spinner("Generando respuesta..."):
                 chunks = st.session_state.pipeline.retrieve_chunks(query)
