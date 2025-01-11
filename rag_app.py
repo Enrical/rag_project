@@ -60,6 +60,16 @@ def check_login():
                 st.error("Invalid username or password.")
         st.stop()
 
+def save_user_data(user_data):
+    """Save user data to a JSON file."""
+    try:
+        with open("user_data.json", "w") as file:
+            json.dump(user_data, file, indent=4)
+        logging.debug(f"User data saved successfully: {user_data}")
+    except Exception as e:
+        logging.error(f"Error saving user data: {str(e)}")
+        raise Exception(f"Failed to save user data: {str(e)}")
+
 
 def register_user():
     """Handle user registration."""
@@ -103,7 +113,12 @@ def save_conversation(username, conversations):
     if username not in user_data:
         user_data[username] = {"password": "", "conversations": {}}
     user_data[username]["conversations"] = conversations
+
+    # Debug logging
+    logging.debug(f"Saving user data for {username}: {user_data}")
+
     save_user_data(user_data)
+
 
 
 class RAGPipeline:
