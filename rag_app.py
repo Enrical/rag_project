@@ -226,12 +226,18 @@ def chat_interface():
         new_convo_name = st.text_input("Nombre de la nueva conversación")
         if st.button("Crear conversación", key="create_convo_button"):
             if new_convo_name.strip():
+                if "conversations" not in st.session_state:
+                    st.session_state.conversations = {}
                 st.session_state.conversations[new_convo_name] = []
                 st.session_state.current_conversation = new_convo_name
-                save_conversation(st.session_state.username, st.session_state.conversations)
+                try:
+                    save_conversation(st.session_state.username, st.session_state.conversations)
+                except Exception as e:
+                    st.error(f"Failed to save conversation: {str(e)}")
             else:
                 st.error("Por favor introduce un nombre válido para la conversación.")
         return
+
 
     current_history = st.session_state.conversations[st.session_state.current_conversation]
 
