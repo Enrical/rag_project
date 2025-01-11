@@ -168,11 +168,6 @@ def generate_response(self, system_prompt: str, query: str, conversation_history
     messages = conversation_history + [{"role": "user", "content": query}]
 
     try:
-        logging.debug(f"Generating response with system_prompt: {system_prompt}")
-        logging.debug(f"Query: {query}")
-        logging.debug(f"Conversation history: {conversation_history}")
-        
-        # API call
         response = self.anthropic_client.messages.create(
             model="claude-3-sonnet-20240229",
             max_tokens=1024,
@@ -180,18 +175,22 @@ def generate_response(self, system_prompt: str, query: str, conversation_history
             messages=messages
         )
 
+        # Ensure the response structure is logged for debugging
         logging.debug(f"Full API response: {response}")
-        
-        # Access the completion attribute directly if it's not a dictionary
+
+        # Check the response object for the completion attribute
         if hasattr(response, "completion"):
             return response.completion.strip()
+        elif isinstance(response, dict) and "completion" in response:
+            return response["completion"].strip()
         else:
-            raise Exception("Unexpected response format: 'completion' attribute not found.")
+            raise Exception("Unexpected response format from API")
 
     except Exception as e:
         logging.error(f"Failed to generate response: {str(e)}")
         raise Exception(f"Failed to generate response: {str(e)}")
 
+logging.debug(f"Response structure: {response}")
 
 
 def initialize_session_state():
