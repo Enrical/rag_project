@@ -161,22 +161,37 @@ class RAGPipeline:
         /
         Para cualquier otra pregunta responde: "Todavía no tengo ese conocimiento, pero seguiré aprendiendo para poder ser de más ayuda pronto."""
 
-    def generate_response(self, system_prompt: str, query: str, conversation_history: list = None) -> str:
-        if conversation_history is None:
-            conversation_history = []
+def generate_response(self, system_prompt: str, query: str, conversation_history: list = None) -> str:
+    if conversation_history is None:
+        conversation_history = []
 
-        messages = conversation_history + [{"role": "user", "content": query}]
+    messages = conversation_history + [{"role": "user", "content": query}]
 
-        try:
-            response = self.anthropic_client.messages.create(
-                model="claude-3-sonnet-20240229",
-                max_tokens=1024,
-                system=system_prompt,
-                messages=messages
-            )
-            return response.get("completion", "No response generated").strip()
-        except Exception as e:
-            raise Exception(f"Failed to generate response: {str(e)}")
+    try:
+        logging.debug(f"Generating response with system_prompt: {system_prompt}")
+        logging.debug(f"Query: {query}")
+        logging.debug(f"Conversation history: {conversation_history}")
+        
+        # API call
+        response = self.anthropic_client.messages.create(
+            model="claude-3-sonnet-20240229",
+            max_tokens=1024,
+            system=system_prompt,
+            messages=messages
+        )
+
+        logging.debug(f"Full API response: {response}")
+        
+        # Access the completion attribute directly if it's not a dictionary
+        if hasattr(response, "completion"):
+            return response.completion.strip()
+        else:
+            raise Exception("Unexpected response format: 'completion' attribute not found.")
+
+    except Exception as e:
+        logging.error(f"Failed to generate response: {str(e)}")
+        raise Exception(f"Failed to generate response: {str(e)}")
+
 
 
 def initialize_session_state():
