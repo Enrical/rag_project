@@ -106,8 +106,8 @@ class RAGPipeline:
         self.anthropic_api_key = anthropic_api_key
         self.anthropic_client = Anthropic(api_key=anthropic_api_key)
 
-#        self.RAGIE_UPLOAD_URL = "https://api.ragie.ai/documents/url"
-#        self.RAGIE_RETRIEVAL_URL = "https://api.ragie.ai/retrievals"
+        self.RAGIE_UPLOAD_URL = "https://api.ragie.ai/documents/url"
+        self.RAGIE_RETRIEVAL_URL = "https://api.ragie.ai/retrievals"
 
     def upload_document(self, url: str, name: Optional[str] = None, mode: str = "fast") -> Dict:
         if not name:
@@ -125,7 +125,7 @@ class RAGPipeline:
             "authorization": f"Bearer {self.ragie_api_key}"
         }
 
-        response = requests.post(self.RAGIE_UPLOAD_URL, json=payload, headers=headers)
+        response = generate_response.post(self.RAGIE_UPLOAD_URL, json=payload, headers=headers)
         if not response.ok:
             raise Exception(f"Document upload failed: {response.status_code} {response.reason}")
 
@@ -139,7 +139,7 @@ class RAGPipeline:
 
         payload = {"query": query}
 
-        response = requests.post(self.RAGIE_RETRIEVAL_URL, headers=headers, json=payload)
+        response = generate_response.post(self.RAGIE_RETRIEVAL_URL, headers=headers, json=payload)
         if not response.ok:
             raise Exception(f"Retrieval failed: {response.status_code} {response.reason}")
 
