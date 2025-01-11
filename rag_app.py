@@ -156,31 +156,31 @@ class RAGPipeline:
         /
         Para cualquier otra pregunta responde: "Todavía no tengo ese conocimiento, pero seguiré aprendiendo para poder ser de más ayuda pronto."""
 
-    def generate_response(self, system_prompt: str, query: str, conversation_history: list = None) -> str:
-        if conversation_history is None:
-            conversation_history = []
+def generate_response(self, system_prompt: str, query: str, conversation_history: list = None) -> str:
+    if conversation_history is None:
+        conversation_history = []
 
-        messages = conversation_history + [{"role": "user", "content": query}]
+    messages = conversation_history + [{"role": "user", "content": query}]
 
-        try:
-            response = self.anthropic_client.messages.create(
-                model="claude-3-sonnet-20240229",
-                max_tokens=1024,
-                temperature=0.7,
-                top_p=0.9,
-                system=system_prompt,
-                messages=messages
-            )
+    try:
+        # Make the API request
+        response = self.anthropic_client.messages.create(
+            model="claude-3-sonnet-20240229",
+            max_tokens=1024,
+            system=system_prompt,
+            messages=messages
+        )
 
-            # Log and handle unexpected API responses
-            logging.debug(f"API response: {response}")
-            if hasattr(response, "completion"):
-                return response.completion.strip()
-            else:
-                raise ValueError("Unexpected API response structure.")
-        except Exception as e:
-            logging.error(f"Error generating response: {str(e)}")
-            raise Exception(f"Failed to generate response: {str(e)}")
+        # Log the raw response for debugging
+        logging.debug(f"Raw API response: {response}")
+
+        # Return the content directly from the response
+        return response.content
+
+    except Exception as e:
+        # Log the error with raw response for debugging
+        logging.error(f"Error generating response: {str(e)}")
+        raise Exception(f"Failed to generate response: {str(e)}")
 
 def initialize_session_state():
     """Initialize session state variables."""
