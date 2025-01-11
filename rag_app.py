@@ -272,9 +272,6 @@ def main():
                     st.session_state.current_conversation = convo
             chat_interface()
 
-logging.debug(f"System Prompt: {system_prompt}")
-logging.debug(f"User Query: {query}")
-logging.debug(f"API Raw Response: {response}")
 
 
 if __name__ == "__main__":
