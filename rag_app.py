@@ -125,7 +125,7 @@ class RAGPipeline:
             "authorization": f"Bearer {self.ragie_api_key}"
         }
 
-        response = generate_response.post(self.RAGIE_UPLOAD_URL, json=payload, headers=headers)
+        response = requests.post(self.RAGIE_UPLOAD_URL, json=payload, headers=headers)
         if not response.ok:
             raise Exception(f"Document upload failed: {response.status_code} {response.reason}")
 
@@ -139,7 +139,7 @@ class RAGPipeline:
 
         payload = {"query": query}
 
-        response = generate_response.post(self.RAGIE_RETRIEVAL_URL, headers=headers, json=payload)
+        response = requests.post(self.RAGIE_RETRIEVAL_URL, headers=headers, json=payload)
         if not response.ok:
             raise Exception(f"Retrieval failed: {response.status_code} {response.reason}")
 
@@ -239,7 +239,7 @@ def chat_interface():
             current_history.append({"role": "user", "content": query})
 
             with st.spinner("Generating response..."):
-                chunks = ["Example chunk"]  # Replace with actual retrieval logic
+                chunks = [str]  # Replace with actual retrieval logic
                 system_prompt = f"Respond based on: {chunks}"
                 response = st.session_state.pipeline.generate_response(system_prompt, query, current_history)
 
