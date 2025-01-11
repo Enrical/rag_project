@@ -156,10 +156,10 @@ def admin_interface():
 
     st.sidebar.markdown(f"**Conversación activa**: {st.session_state.current_conversation}")
 
-    toggle_button_label = "Comenzar Chat" if st.session_state.admin_mode else "Cambiar al modo Admin"
-    if st.sidebar.button(toggle_button_label):
-        st.session_state.admin_mode = not st.session_state.admin_mode
-        st.session_state.chat_mode = not st.session_state.chat_mode
+#    toggle_button_label = "Comenzar Chat" if st.session_state.admin_mode else "Cambiar al modo Admin"
+#    if st.sidebar.button(toggle_button_label):
+#        st.session_state.admin_mode = not st.session_state.admin_mode
+#        st.session_state.chat_mode = not st.session_state.chat_mode
 
 
 def chat_interface():
