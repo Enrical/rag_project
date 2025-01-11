@@ -16,12 +16,6 @@ def ensure_user_data_file():
     """Ensure the user data file exists and is valid JSON."""
     if not os.path.exists("user_data.json"):
         with open("user_data.json", "w") as file:
-            file.write('{"test": "write successful"}')
-
-def ensure_user_data_file():
-    """Ensure the user data file exists and is valid."""
-    if not os.path.exists("user_data.json"):
-        with open("user_data.json", "w") as file:
             json.dump({}, file)
 
 
@@ -36,7 +30,15 @@ def load_user_data():
             json.dump({}, file)  # Reset to an empty JSON object
         return {}
 
-
+def save_user_data(user_data):
+    """Save user data to a JSON file."""
+    try:
+        with open("user_data.json", "w") as file:
+            json.dump(user_data, file, indent=4)
+        logging.debug(f"User data saved successfully: {user_data}")
+    except Exception as e:
+        logging.error(f"Error saving user data: {str(e)}")
+        raise Exception(f"Failed to save user data: {str(e)}")
 
 def check_login():
     """Handle user login and conversation persistence."""
@@ -54,37 +56,24 @@ def check_login():
             if username in user_data and bcrypt.checkpw(password.encode('utf-8'), user_data[username]["password"].encode('utf-8')):
                 st.session_state.logged_in = True
                 st.session_state.username = username
-                st.session_state.conversations = user_data[username]["conversations"]
+                st.session_state.conversations = user_data[username].get("conversations", {})
                 st.success("Login successful!")
             else:
                 st.error("Invalid username or password.")
         st.stop()
 
-def save_user_data(user_data):
-    """Save user data to a JSON file."""
-    try:
-        with open("user_data.json", "w") as file:
-            json.dump(user_data, file, indent=4)
-        logging.debug(f"User data saved successfully: {user_data}")
-    except Exception as e:
-        logging.error(f"Error saving user data: {str(e)}")
-        raise Exception(f"Failed to save user data: {str(e)}")
-
 
 def register_user():
     """Handle user registration."""
-    ensure_user_data_file()  # Ensure the file exists
-    user_data = load_user_data()  # Load existing data
+    ensure_user_data_file()
+    user_data = load_user_data()
 
-    with st.form(key="register_form", clear_on_submit=True):
+    with st.form(key="register_form"):
         username = st.text_input("New Username", key="register_username")
         password = st.text_input("New Password", type="password", key="register_password")
         submit = st.form_submit_button("Register")
 
     if submit:
-        # Debug logging
-        logging.debug(f"Registration attempt: Username='{username}', Password provided")
-
         if not username.strip() or not password.strip():
             st.error("Username and password cannot be empty.")
             return
@@ -94,30 +83,21 @@ def register_user():
             return
 
         try:
-            # Register the user
             hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
             user_data[username] = {"password": hashed_password, "conversations": {}}
             save_user_data(user_data)
-            logging.debug(f"User '{username}' registered successfully: {user_data}")
             st.success(f"User '{username}' registered successfully. Please log in.")
         except Exception as e:
             st.error(f"An error occurred during registration: {str(e)}")
-            logging.error(f"Registration error: {str(e)}")
-
-
 
 
 def save_conversation(username, conversations):
     """Save the user's conversations to the data file."""
     user_data = load_user_data()
-    if username not in user_data:
-        user_data[username] = {"password": "", "conversations": {}}
-    user_data[username]["conversations"] = conversations
+    if username in user_data:
+        user_data[username]["conversations"] = conversations
+        save_user_data(user_data)
 
-    # Debug logging
-    logging.debug(f"Saving user data for {username}: {user_data}")
-
-    save_user_data(user_data)
 
 
 
@@ -183,35 +163,33 @@ class RAGPipeline:
         messages = conversation_history + [{"role": "user", "content": query}]
 
         try:
-            # Make the API request
             response = self.anthropic_client.messages.create(
-                model="claude-3-sonnet-20240229",
+                model="claude-3",
                 max_tokens=1024,
+                temperature=0.7,
+                top_p=0.9,
                 system=system_prompt,
                 messages=messages
             )
 
-            # Log the raw response for debugging
-            logging.debug(f"Raw API response: {response}")
-
-            # Extract the completion or handle unexpected structure
-            if "completion" in response:
-                return response["completion"].strip()
+            # Log and handle unexpected API responses
+            logging.debug(f"API response: {response}")
+            if hasattr(response, "completion"):
+                return response.completion.strip()
             else:
-                raise ValueError("Unexpected response format: 'completion' key not found.")
+                raise ValueError("Unexpected API response structure.")
         except Exception as e:
-            # Log the error with raw response for debugging
             logging.error(f"Error generating response: {str(e)}")
             raise Exception(f"Failed to generate response: {str(e)}")
-
 
 
 def initialize_session_state():
     """Initialize session state variables."""
     if 'pipeline' not in st.session_state:
-        ragie_key = st.secrets["RAGIE_API_KEY"]
-        anthropic_key = st.secrets["ANTHROPIC_API_KEY"]
-        st.session_state.pipeline = RAGPipeline(ragie_key, anthropic_key)
+        st.session_state.pipeline = RAGPipeline(
+            ragie_api_key=st.secrets["RAGIE_API_KEY"],
+            anthropic_api_key=st.secrets["ANTHROPIC_API_KEY"]
+        )
 
     if 'conversations' not in st.session_state:
         st.session_state.conversations = {}
@@ -221,75 +199,60 @@ def initialize_session_state():
 
 
 def chat_interface():
-    st.markdown("### 🕵️‍♂️ Habla con Enrique AI")
+    st.markdown("### Chat with Enrique AI")
 
     if not st.session_state.current_conversation:
-        st.info("Por favor selecciona o crea una nueva conversación.")
-        new_convo_name = st.text_input("Nombre de la nueva conversación")
-        if st.button("Crear conversación", key="create_convo_button"):
+        st.info("Please create or select a conversation.")
+        new_convo_name = st.text_input("New Conversation Name")
+        if st.button("Create Conversation"):
             if new_convo_name.strip():
-                if "conversations" not in st.session_state:
-                    st.session_state.conversations = {}
                 st.session_state.conversations[new_convo_name] = []
                 st.session_state.current_conversation = new_convo_name
-                try:
-                    save_conversation(st.session_state.username, st.session_state.conversations)
-                except Exception as e:
-                    st.error(f"Failed to save conversation: {str(e)}")
+                save_conversation(st.session_state.username, st.session_state.conversations)
             else:
-                st.error("Por favor introduce un nombre válido para la conversación.")
+                st.error("Conversation name cannot be empty.")
         return
-
 
     current_history = st.session_state.conversations[st.session_state.current_conversation]
 
     for message in current_history:
-        role = message["role"]
-        content = message["content"]
-        if role == "user":
-            st.markdown(f"**You:** {content}")
+        if message["role"] == "user":
+            st.markdown(f"**You:** {message['content']}")
         else:
-            st.markdown(f"**AI:** {content}")
+            st.markdown(f"**Enrique AI:** {message['content']}")
 
-    query = st.text_input("Escribe tu mensaje")
-    if st.button("Enviar", key="send_message_button"):
+    query = st.text_input("Your message")
+    if st.button("Send"):
         if query.strip():
             current_history.append({"role": "user", "content": query})
 
-            with st.spinner("Generando respuesta..."):
-                chunks = st.session_state.pipeline.retrieve_chunks(query)
-                if chunks:
-                    system_prompt = st.session_state.pipeline.create_system_prompt(chunks)
-                    response = st.session_state.pipeline.generate_response(
-                        system_prompt, query, current_history
-                    )
-                else:
-                    response = "No relevant information found."
+            with st.spinner("Generating response..."):
+                chunks = ["Example chunk"]  # Replace with actual retrieval logic
+                system_prompt = f"Respond based on: {chunks}"
+                response = st.session_state.pipeline.generate_response(system_prompt, query, current_history)
 
                 current_history.append({"role": "assistant", "content": response})
                 save_conversation(st.session_state.username, st.session_state.conversations)
 
 
 def main():
-    st.set_page_config(page_title="Client Chat System",
-                       page_icon="https://essent-ia.com/wp-content/uploads/2024/11/cropped-cropped-Picture1.png",
-                       layout="centered")
+    st.set_page_config(page_title="Client Chat System", layout="wide")
 
     ensure_user_data_file()
 
-    if st.sidebar.button("Register"):
+    option = st.sidebar.selectbox("Choose an option", ["Login", "Register"])
+    if option == "Register":
         register_user()
-
-    check_login()
-    initialize_session_state()
-
-    st.sidebar.markdown("## Conversaciones")
-    if st.session_state.conversations:
-        for convo in st.session_state.conversations.keys():
-            if st.sidebar.button(convo, key=f"select_convo_{convo}"):
-                st.session_state.current_conversation = convo
-
-    chat_interface()
+    elif option == "Login":
+        check_login()
+        if st.session_state.logged_in:
+            st.sidebar.write(f"Welcome, {st.session_state.username}")
+            initialize_session_state()
+            st.sidebar.markdown("## Conversations")
+            for convo in st.session_state.conversations.keys():
+                if st.sidebar.button(convo):
+                    st.session_state.current_conversation = convo
+            chat_interface()
 
 
 if __name__ == "__main__":
