@@ -171,15 +171,23 @@ def generate_response(self, system_prompt: str, query: str, conversation_history
             messages=messages
         )
 
-        # Log the raw response for debugging
-        logging.debug(f"Raw API response: {response}")
+        # Log the complete response object for debugging
+        logging.debug(f"Complete API response object: {vars(response)}")
 
-        # Return the content directly from the response
-        return response.content
+        # Check if response has content attribute
+        if hasattr(response, 'content'):
+            return response.content
+        elif hasattr(response, 'completion'):
+            return response.completion
+        else:
+            # Log the response structure
+            logging.error(f"Unexpected response structure. Available attributes: {dir(response)}")
+            raise ValueError(f"Unexpected response structure. Response type: {type(response)}")
 
     except Exception as e:
-        # Log the error with raw response for debugging
-        logging.error(f"Error generating response: {str(e)}")
+        logging.error(f"Error in generate_response: {type(e).__name__}: {str(e)}")
+        if hasattr(e, '__dict__'):
+            logging.error(f"Error details: {vars(e)}")
         raise Exception(f"Failed to generate response: {str(e)}")
 
 def initialize_session_state():
