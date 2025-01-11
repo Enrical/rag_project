@@ -190,8 +190,6 @@ def generate_response(self, system_prompt: str, query: str, conversation_history
         logging.error(f"Failed to generate response: {str(e)}")
         raise Exception(f"Failed to generate response: {str(e)}")
 
-logging.debug(f"Response structure: {response}")
-
 
 def initialize_session_state():
     """Initialize session state variables."""
