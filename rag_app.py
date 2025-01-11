@@ -7,17 +7,15 @@ import json
 import os
 import bcrypt
 import logging
+
 logging.basicConfig(level=logging.DEBUG)
 
-def save_user_data(user_data):
-    """Save user data to a JSON file."""
-    logging.debug(f"Saving user data: {user_data}")
-    with open("user_data.json", "w") as file:
-        json.dump(user_data, file, indent=4)
 
-#with open("user_data.json", "w") as test_file:
-#    test_file.write("test")
-
+def ensure_user_data_file():
+    """Ensure the user data file exists and is valid JSON."""
+    if not os.path.exists("user_data.json"):
+        with open("user_data.json", "w") as file:
+            file.write('{"test": "write successful"}')
 
 def ensure_user_data_file():
     """Ensure the user data file exists and is valid."""
@@ -25,12 +23,19 @@ def ensure_user_data_file():
         with open("user_data.json", "w") as file:
             json.dump({}, file)
 
+
 def load_user_data():
     """Load user data from a JSON file."""
-    if os.path.exists("user_data.json"):
+    try:
         with open("user_data.json", "r") as file:
             return json.load(file)
-    return {}
+    except json.JSONDecodeError:
+        # If the file is invalid, reset it
+        with open("user_data.json", "w") as file:
+            json.dump({}, file)  # Reset to an empty JSON object
+        return {}
+
+
 
 def check_login():
     """Handle user login and conversation persistence."""
@@ -39,66 +44,57 @@ def check_login():
         st.session_state.username = None
 
     if not st.session_state.logged_in:
-        st.text_input("Username", key="login_username")
-        st.text_input("Password", type="password", key="login_password")
+        username = st.text_input("Username", key="login_username")
+        password = st.text_input("Password", type="password", key="login_password")
 
         if st.button("Login", key="login_button"):
-            username = st.session_state.login_username
-            password = st.session_state.login_password.encode('utf-8')
             user_data = load_user_data()
 
-            if username in user_data and bcrypt.checkpw(password, user_data[username]["password"].encode('utf-8')):
+            if username in user_data and bcrypt.checkpw(password.encode('utf-8'), user_data[username]["password"].encode('utf-8')):
                 st.session_state.logged_in = True
                 st.session_state.username = username
                 st.session_state.conversations = user_data[username]["conversations"]
                 st.success("Login successful!")
             else:
                 st.error("Invalid username or password.")
-
         st.stop()
+
 
 def register_user():
     """Handle user registration."""
-    if "registration_success" not in st.session_state:
-        st.session_state.registration_success = False
+    ensure_user_data_file()  # Ensure the file exists
+    user_data = load_user_data()  # Load existing data
 
-    # Registration form
-    with st.form(key="register_form", clear_on_submit=False):
+    with st.form(key="register_form", clear_on_submit=True):
         username = st.text_input("New Username", key="register_username")
         password = st.text_input("New Password", type="password", key="register_password")
-        register_submit = st.form_submit_button("Register")
+        submit = st.form_submit_button("Register")
 
-    # Handle registration logic
-    if register_submit:
+    if submit:
+        # Debug logging
+        logging.debug(f"Registration attempt: Username='{username}', Password provided")
+
         if not username.strip() or not password.strip():
             st.error("Username and password cannot be empty.")
             return
 
-        user_data = load_user_data()
-
         if username in user_data:
             st.error("Username already exists.")
-        else:
-            try:
-                # Securely hash the password
-                hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-                # Add the new user to the user data
-                user_data[username] = {"password": hashed_password, "conversations": {}}
-                save_user_data(user_data)
+            return
 
-                # Indicate successful registration
-                st.session_state.registration_success = True
-                st.success("User registered successfully. Please log in.")
-            except Exception as e:
-                st.error(f"An error occurred while registering the user: {str(e)}")
-                return
-
-    # Reset success message if page re-renders
-    if st.session_state.registration_success:
-        st.success("User registered successfully. Please log in.")
+        try:
+            # Register the user
+            hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+            user_data[username] = {"password": hashed_password, "conversations": {}}
+            save_user_data(user_data)
+            logging.debug(f"User '{username}' registered successfully: {user_data}")
+            st.success(f"User '{username}' registered successfully. Please log in.")
+        except Exception as e:
+            st.error(f"An error occurred during registration: {str(e)}")
+            logging.error(f"Registration error: {str(e)}")
 
 
-       # st.stop()
+
 
 def save_conversation(username, conversations):
     """Save the user's conversations to the data file."""
@@ -107,6 +103,7 @@ def save_conversation(username, conversations):
         user_data[username] = {"password": "", "conversations": {}}
     user_data[username]["conversations"] = conversations
     save_user_data(user_data)
+
 
 class RAGPipeline:
     def __init__(self, ragie_api_key: str, anthropic_api_key: str):
@@ -166,9 +163,9 @@ class RAGPipeline:
     def generate_response(self, system_prompt: str, query: str, conversation_history: list = None) -> str:
         if conversation_history is None:
             conversation_history = []
-        
+
         messages = conversation_history + [{"role": "user", "content": query}]
-        
+
         try:
             response = self.anthropic_client.messages.create(
                 model="claude-3-sonnet-20240229",
@@ -179,6 +176,7 @@ class RAGPipeline:
             return response.get("completion", "No response generated").strip()
         except Exception as e:
             raise Exception(f"Failed to generate response: {str(e)}")
+
 
 def initialize_session_state():
     """Initialize session state variables."""
@@ -192,6 +190,7 @@ def initialize_session_state():
 
     if 'current_conversation' not in st.session_state:
         st.session_state.current_conversation = None
+
 
 def chat_interface():
     st.markdown("### 🕵️‍♂️ Habla con Enrique AI")
@@ -236,14 +235,15 @@ def chat_interface():
                 current_history.append({"role": "assistant", "content": response})
                 save_conversation(st.session_state.username, st.session_state.conversations)
 
+
 def main():
     st.set_page_config(page_title="Client Chat System",
                        page_icon="https://essent-ia.com/wp-content/uploads/2024/11/cropped-cropped-Picture1.png",
                        layout="centered")
-    
-    ensure_user_data_file()  # Ensure the file exists
 
-    if st.sidebar.button("Register", key="sidebar_register_button"):
+    ensure_user_data_file()
+
+    if st.sidebar.button("Register"):
         register_user()
 
     check_login()
@@ -256,6 +256,7 @@ def main():
                 st.session_state.current_conversation = convo
 
     chat_interface()
+
 
 if __name__ == "__main__":
     main()
