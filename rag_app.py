@@ -4,26 +4,77 @@ from anthropic import Anthropic
 from urllib.parse import urlparse
 from typing import List, Dict, Optional
 import json
+import os
+import bcrypt
 
+def load_user_data():
+    """Load user data from a JSON file."""
+    if os.path.exists("user_data.json"):
+        with open("user_data.json", "r") as file:
+            return json.load(file)
+    return {}
 
-def check_password():
-    """Display a password input box and verify access."""
-    if "password_verified" not in st.session_state:
-        st.session_state.password_verified = False
+def save_user_data(user_data):
+    """Save user data to a JSON file."""
+    with open("user_data.json", "w") as file:
+        json.dump(user_data, file, indent=4)
 
-    if not st.session_state.password_verified:
-        st.text_input("Escribe tu contraseña", type="password", key="password_input")
+def check_login():
+    """Handle user login and conversation persistence."""
+    if "logged_in" not in st.session_state:
+        st.session_state.logged_in = False
+        st.session_state.username = None
 
-        if st.button("Enviar"):
-            if st.session_state.password_input == st.secrets["APP_PASSWORD"]:
-                st.session_state.password_verified = True
-                st.session_state.admin_mode = True  # Automatically enable admin mode
-                st.success("Acceso concedido! Clica en continuar para abrir el panel de Administrador")
-                st.button("continuar")
+    if not st.session_state.logged_in:
+        st.text_input("Username", key="login_username")
+        st.text_input("Password", type="password", key="login_password")
+
+        if st.button("Login"):
+            username = st.session_state.login_username
+            password = st.session_state.login_password.encode('utf-8')
+            user_data = load_user_data()
+
+            if username in user_data and bcrypt.checkpw(password, user_data[username]["password"].encode('utf-8')):
+                st.session_state.logged_in = True
+                st.session_state.username = username
+                st.session_state.conversations = user_data[username]["conversations"]
+                st.success("Login successful!")
             else:
-                st.error("Invalid password. Please try again.")
+                st.error("Invalid username or password.")
+
         st.stop()
 
+def register_user():
+    """Handle user registration."""
+    st.text_input("New Username", key="register_username")
+    st.text_input("New Password", type="password", key="register_password")
+
+    if st.button("Register"):
+        username = st.session_state.register_username
+        password = st.session_state.register_password.encode('utf-8')
+
+        if not username or not password:
+            st.error("Username and password cannot be empty.")
+            return
+
+        user_data = load_user_data()
+        if username in user_data:
+            st.error("Username already exists.")
+        else:
+            hashed_password = bcrypt.hashpw(password, bcrypt.gensalt()).decode('utf-8')
+            user_data[username] = {"password": hashed_password, "conversations": {}}
+            save_user_data(user_data)
+            st.success("User registered successfully. Please log in.")
+
+        st.stop()
+
+def save_conversation(username, conversations):
+    """Save the user's conversations to the data file."""
+    user_data = load_user_data()
+    if username not in user_data:
+        user_data[username] = {"password": "", "conversations": {}}
+    user_data[username]["conversations"] = conversations
+    save_user_data(user_data)
 
 class RAGPipeline:
     def __init__(self, ragie_api_key: str, anthropic_api_key: str):
@@ -34,11 +85,13 @@ class RAGPipeline:
         self.RAGIE_UPLOAD_URL = "https://api.ragie.ai/documents/url"
         self.RAGIE_RETRIEVAL_URL = "https://api.ragie.ai/retrievals"
 
-    def upload_document(self, url: str, name: Optional[str] = None, mode: str = "fast") -> Dict:
-        if not name:
-            name = urlparse(url).path.split('/')[-1] or "document"
+    def upload_document(self, content: str, name: Optional[str] = None, mode: str = "fast") -> Dict:
+        payload = {
+            "mode": mode,
+            "name": name or "Generated Document",
+            "content": content
+        }
 
-        payload = {"mode": mode, "name": name, "url": url}
         headers = {
             "accept": "application/json",
             "content-type": "application/json",
@@ -72,7 +125,9 @@ class RAGPipeline:
         Personalidad:
         Estructurado, con capacidad para manejar sistemas y herramientas administrativas, y con una actitud proactiva hacia la mejora de procesos. A la vez, demuestra una cierta flexibilidad y empatía en la gestión del equipo, asegurándose de que haya consenso y evitando conflictos innecesarios.
         /
-        Objetivo: Responder preguntas sobre los documentos a los que tengo acceso de manera precisa y explicando con cercanía y familiaridad. No copies y pegues el texto, responde a la pregunta con confianza. {chunk_texts}.
+        Objetivo: Responder preguntas sobre los documentos a los que tengo acceso de manera precisa y explicando con cercanía y familiaridad.
+        /
+        Enrique responde solo preguntas relacionadas con los documentos: {chunk_texts}.
         /
         Para cualquier otra pregunta responde: "Todavía no tengo ese conocimiento, pero seguiré aprendiendo para poder ser de más ayuda pronto."""
 
@@ -82,25 +137,16 @@ class RAGPipeline:
         
         messages = conversation_history + [{"role": "user", "content": query}]
         
-        response = self.anthropic_client.messages.create(
-            model="claude-3-sonnet-20240229",
-            max_tokens=1024,
-            temperature=0.8,  # Adjust creativity level
-            system=system_prompt,
-            messages=messages
-        )
-        return response.content[0].text
-
-
-def load_documents():
-    """Load documents from a JSON file."""
-    try:
-        with open("documents.json", "r") as file:
-            return json.load(file)
-    except Exception as e:
-        st.error(f"Error loading documents.json: {str(e)}")
-        return {}
-
+        try:
+            response = self.anthropic_client.messages.create(
+                model="claude-3-sonnet-20240229",
+                max_tokens=1024,
+                system=system_prompt,
+                messages=messages
+            )
+            return response.get("completion", "No response generated").strip()
+        except Exception as e:
+            raise Exception(f"Failed to generate response: {str(e)}")
 
 def initialize_session_state():
     """Initialize session state variables."""
@@ -109,152 +155,73 @@ def initialize_session_state():
         anthropic_key = st.secrets["ANTHROPIC_API_KEY"]
         st.session_state.pipeline = RAGPipeline(ragie_key, anthropic_key)
 
-    if 'document_sets' not in st.session_state:
-        st.session_state.document_sets = load_documents()
-
-    if "conversations" not in st.session_state:
+    if 'conversations' not in st.session_state:
         st.session_state.conversations = {}
 
-    if "current_conversation" not in st.session_state:
+    if 'current_conversation' not in st.session_state:
         st.session_state.current_conversation = None
 
-    if 'current_client' not in st.session_state:
-        st.session_state.current_client = None
-
-    if 'uploaded_documents' not in st.session_state:
-        st.session_state.uploaded_documents = []
-
-    if 'chat_history' not in st.session_state:
-        st.session_state.chat_history = []
-
-    if 'chat_mode' not in st.session_state:
-        st.session_state.chat_mode = False
-
-    if 'admin_mode' not in st.session_state:
-        st.session_state.admin_mode = True
-
-
-def admin_interface():
-    st.sidebar.markdown("### Panel del Administración")
-    if st.sidebar.button("Nueva Conversación"):
-        new_id = f"Conversación {len(st.session_state.conversations) + 1}"
-        st.session_state.conversations[new_id] = []
-        st.session_state.current_conversation = new_id
-        #st.session_state.uploaded_documents = st.session_state.document_sets.get(id, [])
-
-    #    st.sidebar.markdown("### Documentos seleccionados")
-    #    for doc in st.session_state.uploaded_documents:
-    #        st.sidebar.markdown(f"- [**{doc['name']}**]({doc['url']})", unsafe_allow_html=True)
-
-    conversation_list = list(st.session_state.conversations.keys())
-    if conversation_list:
-        selected_conversation = st.sidebar.selectbox(
-            "Selecciona una conversación", conversation_list
-        )
-        if selected_conversation:
-            st.session_state.current_conversation = selected_conversation
-
-    st.sidebar.markdown(f"**Conversación activa**: {st.session_state.current_conversation}")
-
-#    toggle_button_label = "Comenzar Chat" if st.session_state.admin_mode else "Cambiar al modo Admin"
-#    if st.sidebar.button(toggle_button_label):
-#        st.session_state.admin_mode = not st.session_state.admin_mode
-#        st.session_state.chat_mode = not st.session_state.chat_mode
-
-
 def chat_interface():
-    st.markdown(
-        """
-        <style>
-        .user-message {
-            color: black;
-            font-weight: normal;
-            margin-bottom: 10px;
-        }
-        .ai-message {
-            color: black;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-        /* Ensure child <p> elements inside .ai-message inherit the styles */
-        .ai-message p {
-        color: inherit; /* Use the color of the parent */
-        font-weight: inherit; /* Use the font weight of the parent */
-        }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
-
     st.markdown("### 🕵️‍♂️ Habla con Enrique AI")
 
     if not st.session_state.current_conversation:
         st.info("Por favor selecciona o crea una nueva conversación.")
+        new_convo_name = st.text_input("Nombre de la nueva conversación")
+        if st.button("Crear conversación"):
+            if new_convo_name.strip():
+                st.session_state.conversations[new_convo_name] = []
+                st.session_state.current_conversation = new_convo_name
+                save_conversation(st.session_state.username, st.session_state.conversations)
+            else:
+                st.error("Por favor introduce un nombre válido para la conversación.")
         return
 
-    # Get the current conversation's history
     current_history = st.session_state.conversations[st.session_state.current_conversation]
 
-    # Display the full chat history
-    chat_placeholder = st.empty()  # Placeholder to dynamically update the chat
-    with chat_placeholder.container():
-        for message in current_history:
-            if message["role"] == "user":
-                st.markdown(f'<div class="user-message">You: {message["content"]}</div>', unsafe_allow_html=True)
-            elif message["role"] == "assistant":
-                st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {message["content"]}</div>', unsafe_allow_html=True)
-
-    # Input and form for handling Enter or button click
-    with st.form(key="chat_form", clear_on_submit=True):
-        query = st.text_input("Escribe tu mensaje", value="", key="chat_query")
-        submit_button = st.form_submit_button("Enviar")
-
-    if submit_button:
-        if query.strip():
-            try:
-                # Append user's query to the current conversation
-                current_history.append({"role": "user", "content": query})
-
-                # Generate the assistant's response
-                with st.spinner("Generando respuesta..."):
-                    chunks = st.session_state.pipeline.retrieve_chunks(query)
-                    if chunks:
-                        system_prompt = st.session_state.pipeline.create_system_prompt(chunks)
-                        response = st.session_state.pipeline.generate_response(
-                            system_prompt, query, current_history
-                        )
-                    else:
-                        response = "No relevant information found."
-
-                    # Append assistant's response to the current conversation
-                    current_history.append({"role": "assistant", "content": response})
-
-                # Update chat dynamically
-                with chat_placeholder.container():
-                    for message in current_history:
-                        if message["role"] == "user":
-                            st.markdown(f'<div class="user-message">You: {message["content"]}</div>', unsafe_allow_html=True)
-                        elif message["role"] == "assistant":
-                            st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {message["content"]}</div>', unsafe_allow_html=True)
-
-            except Exception as e:
-                st.error(f"Error generating response: {str(e)}")
+    for message in current_history:
+        role = message["role"]
+        content = message["content"]
+        if role == "user":
+            st.markdown(f"**You:** {content}")
         else:
-            st.error("Please enter a message.")
+            st.markdown(f"**AI:** {content}")
 
+    query = st.text_input("Escribe tu mensaje")
+    if st.button("Enviar"):
+        if query.strip():
+            current_history.append({"role": "user", "content": query})
+
+            with st.spinner("Generando respuesta..."):
+                chunks = st.session_state.pipeline.retrieve_chunks(query)
+                if chunks:
+                    system_prompt = st.session_state.pipeline.create_system_prompt(chunks)
+                    response = st.session_state.pipeline.generate_response(
+                        system_prompt, query, current_history
+                    )
+                else:
+                    response = "No relevant information found."
+
+                current_history.append({"role": "assistant", "content": response})
+                save_conversation(st.session_state.username, st.session_state.conversations)
 
 def main():
     st.set_page_config(page_title="Client Chat System",
                        page_icon="https://essent-ia.com/wp-content/uploads/2024/11/cropped-cropped-Picture1.png",
                        layout="centered")
 
-    check_password()
+    if st.sidebar.button("Register"):
+        register_user()
+
+    check_login()
     initialize_session_state()
-    admin_interface()
 
-   # if st.session_state.chat_mode:
+    st.sidebar.markdown("## Conversaciones")
+    if st.session_state.conversations:
+        for convo in st.session_state.conversations.keys():
+            if st.sidebar.button(convo):
+                st.session_state.current_conversation = convo
+
     chat_interface()
-
 
 if __name__ == "__main__":
     main()
