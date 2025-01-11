@@ -142,9 +142,9 @@ def admin_interface():
         st.session_state.current_conversation = new_id
         #st.session_state.uploaded_documents = st.session_state.document_sets.get(id, [])
 
-        st.sidebar.markdown("### Documentos seleccionados")
-        for doc in st.session_state.uploaded_documents:
-            st.sidebar.markdown(f"- [**{doc['name']}**]({doc['url']})", unsafe_allow_html=True)
+    #    st.sidebar.markdown("### Documentos seleccionados")
+    #    for doc in st.session_state.uploaded_documents:
+    #        st.sidebar.markdown(f"- [**{doc['name']}**]({doc['url']})", unsafe_allow_html=True)
 
     conversation_list = list(st.session_state.conversations.keys())
     if conversation_list:
