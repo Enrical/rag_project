@@ -19,6 +19,13 @@ def save_user_data(user_data):
     with open("user_data.json", "w") as file:
         json.dump(user_data, file, indent=4)
 
+def ensure_user_data_file():
+    """Ensure the user data file exists and is valid."""
+    if not os.path.exists("user_data.json"):
+        with open("user_data.json", "w") as file:
+            json.dump({}, file)
+
+
 def check_login():
     """Handle user login and conversation persistence."""
     if "logged_in" not in st.session_state:
@@ -29,7 +36,7 @@ def check_login():
         st.text_input("Username", key="login_username")
         st.text_input("Password", type="password", key="login_password")
 
-        if st.button("Login"):
+        if st.button("Login", key="login_button"):
             username = st.session_state.login_username
             password = st.session_state.login_password.encode('utf-8')
             user_data = load_user_data()
@@ -46,27 +53,46 @@ def check_login():
 
 def register_user():
     """Handle user registration."""
-    st.text_input("New Username", key="register_username")
-    st.text_input("New Password", type="password", key="register_password")
+    if "registration_success" not in st.session_state:
+        st.session_state.registration_success = False
 
-    if st.button("Register"):
-        username = st.session_state.register_username
-        password = st.session_state.register_password.encode('utf-8')
+    # Registration form
+    with st.form(key="register_form", clear_on_submit=False):
+        username = st.text_input("New Username", key="register_username")
+        password = st.text_input("New Password", type="password", key="register_password")
+        register_submit = st.form_submit_button("Register")
 
-        if not username or not password:
+    # Handle registration logic
+    if register_submit:
+        if not username.strip() or not password.strip():
             st.error("Username and password cannot be empty.")
             return
 
         user_data = load_user_data()
+
         if username in user_data:
             st.error("Username already exists.")
         else:
-            hashed_password = bcrypt.hashpw(password, bcrypt.gensalt()).decode('utf-8')
-            user_data[username] = {"password": hashed_password, "conversations": {}}
-            save_user_data(user_data)
-            st.success("User registered successfully. Please log in.")
+            try:
+                # Securely hash the password
+                hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+                # Add the new user to the user data
+                user_data[username] = {"password": hashed_password, "conversations": {}}
+                save_user_data(user_data)
 
-        st.stop()
+                # Indicate successful registration
+                st.session_state.registration_success = True
+                st.success("User registered successfully. Please log in.")
+            except Exception as e:
+                st.error(f"An error occurred while registering the user: {str(e)}")
+                return
+
+    # Reset success message if page re-renders
+    if st.session_state.registration_success:
+        st.success("User registered successfully. Please log in.")
+
+
+       # st.stop()
 
 def save_conversation(username, conversations):
     """Save the user's conversations to the data file."""
@@ -167,7 +193,7 @@ def chat_interface():
     if not st.session_state.current_conversation:
         st.info("Por favor selecciona o crea una nueva conversación.")
         new_convo_name = st.text_input("Nombre de la nueva conversación")
-        if st.button("Crear conversación"):
+        if st.button("Crear conversación", key="create_convo_button"):
             if new_convo_name.strip():
                 st.session_state.conversations[new_convo_name] = []
                 st.session_state.current_conversation = new_convo_name
@@ -187,7 +213,7 @@ def chat_interface():
             st.markdown(f"**AI:** {content}")
 
     query = st.text_input("Escribe tu mensaje")
-    if st.button("Enviar"):
+    if st.button("Enviar", key="send_message_button"):
         if query.strip():
             current_history.append({"role": "user", "content": query})
 
@@ -208,8 +234,10 @@ def main():
     st.set_page_config(page_title="Client Chat System",
                        page_icon="https://essent-ia.com/wp-content/uploads/2024/11/cropped-cropped-Picture1.png",
                        layout="centered")
+    
+    ensure_user_data_file()  # Ensure the file exists
 
-    if st.sidebar.button("Register"):
+    if st.sidebar.button("Register", key="sidebar_register_button"):
         register_user()
 
     check_login()
@@ -218,7 +246,7 @@ def main():
     st.sidebar.markdown("## Conversaciones")
     if st.session_state.conversations:
         for convo in st.session_state.conversations.keys():
-            if st.sidebar.button(convo):
+            if st.sidebar.button(convo, key=f"select_convo_{convo}"):
                 st.session_state.current_conversation = convo
 
     chat_interface()
