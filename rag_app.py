@@ -15,12 +15,6 @@ def ensure_user_data_file():
     """Ensure the user data file exists and is valid JSON."""
     if not os.path.exists("user_data.json"):
         with open("user_data.json", "w") as file:
-            file.write('{"test": "write successful"}')
-
-def ensure_user_data_file():
-    """Ensure the user data file exists and is valid."""
-    if not os.path.exists("user_data.json"):
-        with open("user_data.json", "w") as file:
             json.dump({}, file)
 
 
@@ -35,6 +29,14 @@ def load_user_data():
             json.dump({}, file)  # Reset to an empty JSON object
         return {}
 
+def save_user_data(user_data):
+    """Save user data to a JSON file."""
+    try:
+        with open("user_data.json", "w") as file:
+            json.dump(user_data, file, indent=4)
+        logging.debug(f"User data saved: {user_data}")
+    except Exception as e:
+        logging.error(f"Error saving user data: {str(e)}")
 
 
 def check_login():
@@ -65,7 +67,8 @@ def register_user():
     ensure_user_data_file()  # Ensure the file exists
     user_data = load_user_data()  # Load existing data
 
-    with st.form(key="register_form", clear_on_submit=True):
+    st.markdown("## Register a New Account")
+    with st.form(key="register_form"):
         username = st.text_input("New Username", key="register_username")
         password = st.text_input("New Password", type="password", key="register_password")
         submit = st.form_submit_button("Register")
@@ -92,8 +95,6 @@ def register_user():
         except Exception as e:
             st.error(f"An error occurred during registration: {str(e)}")
             logging.error(f"Registration error: {str(e)}")
-
-
 
 
 def save_conversation(username, conversations):
@@ -243,19 +244,21 @@ def main():
 
     ensure_user_data_file()
 
-    if st.sidebar.button("Register"):
+    option = st.sidebar.selectbox("Choose an option", ["Login", "Register"])
+
+    if option == "Register":
         register_user()
-
-    check_login()
-    initialize_session_state()
-
-    st.sidebar.markdown("## Conversaciones")
-    if st.session_state.conversations:
-        for convo in st.session_state.conversations.keys():
-            if st.sidebar.button(convo, key=f"select_convo_{convo}"):
-                st.session_state.current_conversation = convo
-
-    chat_interface()
+    elif option == "Login":
+        check_login()
+        if st.session_state.logged_in:
+            st.sidebar.markdown(f"Welcome, {st.session_state.username}")
+            initialize_session_state()
+            st.sidebar.markdown("## Conversaciones")
+            if st.session_state.conversations:
+                for convo in st.session_state.conversations.keys():
+                    if st.sidebar.button(convo, key=f"select_convo_{convo}"):
+                        st.session_state.current_conversation = convo
+            chat_interface()
 
 
 if __name__ == "__main__":

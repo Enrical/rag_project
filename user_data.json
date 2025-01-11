@@ -1,1 +1,14 @@
-{}
+{
+    "Enrique": {
+        "password": "$2b$12$AU.UiUjKAMOLAupvD10Xe.AVZyZKAl5LmGpXoi3yog70a02n9oF62",
+        "conversations": {}
+    },
+    "e12": {
+        "password": "$2b$12$1uQlkO7qYBJ9tia4jTHITesCgb3NuHpjj8HSECX08IWyuThBqI2z.",
+        "conversations": {}
+    },
+    "a1": {
+        "password": "$2b$12$77MJz9eG19kpNr4/Jdo5gOmhdBn0LwVkKQDzuXDh3T4hWyi3swEGW",
+        "conversations": {}
+    }
+}
