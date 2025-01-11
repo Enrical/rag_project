@@ -174,9 +174,14 @@ class RAGPipeline:
                 system=system_prompt,
                 messages=messages
             )
-            return response.get("completion", "No response generated").strip()
+            logging.debug(f"API Response: {response}")
+            return response["completion"].strip()
+        except KeyError:
+            raise Exception("The 'completion' field is missing in the API response.")
         except Exception as e:
+            logging.error(f"Failed to generate response: {str(e)}")
             raise Exception(f"Failed to generate response: {str(e)}")
+
 
 
 def initialize_session_state():
