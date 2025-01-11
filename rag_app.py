@@ -100,7 +100,6 @@ def save_conversation(username, conversations):
 
 
 
-
 class RAGPipeline:
     def __init__(self, ragie_api_key: str, anthropic_api_key: str):
         self.ragie_api_key = ragie_api_key
@@ -110,11 +109,14 @@ class RAGPipeline:
         self.RAGIE_UPLOAD_URL = "https://api.ragie.ai/documents/url"
         self.RAGIE_RETRIEVAL_URL = "https://api.ragie.ai/retrievals"
 
-    def upload_document(self, content: str, name: Optional[str] = None, mode: str = "fast") -> Dict:
+    def upload_document(self, url: str, name: Optional[str] = None, mode: str = "fast") -> Dict:
+        if not name:
+            name = urlparse(url).path.split('/')[-1] or "document"
+
         payload = {
             "mode": mode,
-            "name": name or "Generated Document",
-            "content": content
+            "name": name,
+            "url": url
         }
 
         headers = {
