@@ -144,9 +144,9 @@ def admin_interface():
             st.session_state.current_client = client
             st.session_state.uploaded_documents = st.session_state.document_sets.get(client, [])
 
-            st.sidebar.markdown("### Documentos seleccionados")
-            for doc in st.session_state.uploaded_documents:
-                st.sidebar.markdown(f"- [**{doc['name']}**]({doc['url']})", unsafe_allow_html=True)
+    #        st.sidebar.markdown("### Documentos seleccionados")
+    #        for doc in st.session_state.uploaded_documents:
+    #            st.sidebar.markdown(f"- [**{doc['name']}**]({doc['url']})", unsafe_allow_html=True)
 
     toggle_button_label = "Comenzar Chat" if st.session_state.admin_mode else "Cambiar al modo Admin"
     if st.sidebar.button(toggle_button_label):
