@@ -13,6 +13,7 @@ def check_password():
 
     if not st.session_state.password_verified:
         st.text_input("Escribe tu contraseña", type="password", key="password_input")
+
         if st.button("Enviar"):
             if st.session_state.password_input == st.secrets["APP_PASSWORD"]:
                 st.session_state.password_verified = True
@@ -37,12 +38,7 @@ class RAGPipeline:
         if not name:
             name = urlparse(url).path.split('/')[-1] or "document"
 
-        payload = {
-            "mode": mode,
-            "name": name,
-            "url": url
-        }
-
+        payload = {"mode": mode, "name": name, "url": url}
         headers = {
             "accept": "application/json",
             "content-type": "application/json",
@@ -76,19 +72,20 @@ class RAGPipeline:
         Personalidad:
         Estructurado, con capacidad para manejar sistemas y herramientas administrativas, y con una actitud proactiva hacia la mejora de procesos. A la vez, demuestra una cierta flexibilidad y empatía en la gestión del equipo, asegurándose de que haya consenso y evitando conflictos innecesarios.
         /
-        Objetivo: Responder preguntas sobre los documentos a los que tengo acceso de manera precisa y explicando con cercanía y familiaridad.
-        /
-        Enrique responde solo preguntas relacionadas con los documentos: {chunk_texts}.
+        Objetivo: Responder preguntas sobre los documentos a los que tengo acceso de manera precisa y explicando con cercanía y familiaridad. No copies y pegues el texto, responde a la pregunta con confianza. {chunk_texts}.
         /
         Para cualquier otra pregunta responde: "Todavía no tengo ese conocimiento, pero seguiré aprendiendo para poder ser de más ayuda pronto."""
 
-    def generate_response(self, system_prompt: str, query: str) -> str:
-        messages = [
-            {"role": "user", "content": query}
-        ]
+    def generate_response(self, system_prompt: str, query: str, conversation_history: list = None) -> str:
+        if conversation_history is None:
+            conversation_history = []
+        
+        messages = conversation_history + [{"role": "user", "content": query}]
+        
         response = self.anthropic_client.messages.create(
             model="claude-3-sonnet-20240229",
             max_tokens=1024,
+            temperature=0.8,  # Adjust creativity level
             system=system_prompt,
             messages=messages
         )
@@ -115,6 +112,12 @@ def initialize_session_state():
     if 'document_sets' not in st.session_state:
         st.session_state.document_sets = load_documents()
 
+    if "conversations" not in st.session_state:
+        st.session_state.conversations = {}
+
+    if "current_conversation" not in st.session_state:
+        st.session_state.current_conversation = None
+
     if 'current_client' not in st.session_state:
         st.session_state.current_client = None
 
@@ -133,20 +136,25 @@ def initialize_session_state():
 
 def admin_interface():
     st.sidebar.markdown("### Panel del Administración")
+    if st.sidebar.button("Nueva Conversación"):
+        new_id = f"Conversación {len(st.session_state.conversations) + 1}"
+        st.session_state.conversations[new_id] = []
+        st.session_state.current_conversation = new_id
+        #st.session_state.uploaded_documents = st.session_state.document_sets.get(id, [])
 
-    if st.session_state.admin_mode:
-        client = st.sidebar.selectbox(
-            "Selecciona tu asistente",
-            options= list(st.session_state.document_sets.keys())
+        st.sidebar.markdown("### Documentos seleccionados")
+        for doc in st.session_state.uploaded_documents:
+            st.sidebar.markdown(f"- [**{doc['name']}**]({doc['url']})", unsafe_allow_html=True)
+
+    conversation_list = list(st.session_state.conversations.keys())
+    if conversation_list:
+        selected_conversation = st.sidebar.selectbox(
+            "Selecciona una conversación", conversation_list
         )
+        if selected_conversation:
+            st.session_state.current_conversation = selected_conversation
 
-        if client != "Selecciona tu asistente":
-            st.session_state.current_client = client
-            st.session_state.uploaded_documents = st.session_state.document_sets.get(client, [])
-
-    #        st.sidebar.markdown("### Documentos seleccionados")
-    #        for doc in st.session_state.uploaded_documents:
-    #            st.sidebar.markdown(f"- [**{doc['name']}**]({doc['url']})", unsafe_allow_html=True)
+    st.sidebar.markdown(f"**Conversación activa**: {st.session_state.current_conversation}")
 
     toggle_button_label = "Comenzar Chat" if st.session_state.admin_mode else "Cambiar al modo Admin"
     if st.sidebar.button(toggle_button_label):
@@ -168,22 +176,10 @@ def chat_interface():
             font-weight: bold;
             margin-bottom: 10px;
         }
-        .st-key-chat_query{
-            display: flex;
-            flex-direction: column-reverse;
-            overflow-y: auto;
-            max-height: 60vh;
-        }        
         /* Ensure child <p> elements inside .ai-message inherit the styles */
         .ai-message p {
         color: inherit; /* Use the color of the parent */
         font-weight: inherit; /* Use the font weight of the parent */
-        }
-        .stButton {
-            display: flex;
-            flex-direction: column-reverse;
-            overflow-y: auto;
-            max-height: 60vh;
         }
         </style>
         """,
@@ -191,20 +187,22 @@ def chat_interface():
     )
 
     st.markdown("### 🕵️‍♂️ Habla con Enrique AI")
-    if not st.session_state.pipeline:
-        st.error("The system is not configured yet. Please contact the administrator.")
+
+    if not st.session_state.current_conversation:
+        st.info("Por favor selecciona o crea una nueva conversación.")
         return
 
-    # Display chat history dynamically
-    chat_placeholder = st.empty()  # Placeholder to dynamically update chat history
+    # Get the current conversation's history
+    current_history = st.session_state.conversations[st.session_state.current_conversation]
+
+    # Display the full chat history
+    chat_placeholder = st.empty()  # Placeholder to dynamically update the chat
     with chat_placeholder.container():
-        for message in st.session_state.chat_history:
-            role = message["role"]
-            content = message["content"]
-            if role == "user":
-                st.markdown(f'<div class="user-message">You: {content}</div>', unsafe_allow_html=True)
-            else:
-                st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {content}</div>', unsafe_allow_html=True)
+        for message in current_history:
+            if message["role"] == "user":
+                st.markdown(f'<div class="user-message">You: {message["content"]}</div>', unsafe_allow_html=True)
+            elif message["role"] == "assistant":
+                st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {message["content"]}</div>', unsafe_allow_html=True)
 
     # Input and form for handling Enter or button click
     with st.form(key="chat_form", clear_on_submit=True):
@@ -214,39 +212,36 @@ def chat_interface():
     if submit_button:
         if query.strip():
             try:
-            # Append the user's query to chat history
-                st.session_state.chat_history.append({"role": "user", "content": query})
+                # Append user's query to the current conversation
+                current_history.append({"role": "user", "content": query})
 
+                # Generate the assistant's response
                 with st.spinner("Generando respuesta..."):
-                    # Retrieve relevant chunks and generate a response
                     chunks = st.session_state.pipeline.retrieve_chunks(query)
-                    if not chunks:
-                        response = "No relevant information found."
-                    else:
+                    if chunks:
                         system_prompt = st.session_state.pipeline.create_system_prompt(chunks)
-                        response = st.session_state.pipeline.generate_response(system_prompt, query)
+                        response = st.session_state.pipeline.generate_response(
+                            system_prompt, query, current_history
+                        )
+                    else:
+                        response = "No relevant information found."
 
-                    # Append the assistant's response to chat history
-                    st.session_state.chat_history.append({"role": "assistant", "content": response})
+                    # Append assistant's response to the current conversation
+                    current_history.append({"role": "assistant", "content": response})
 
-
-                # Refresh the chat history dynamically
+                # Update chat dynamically
                 with chat_placeholder.container():
-                    for message in st.session_state.chat_history:
-                        role = message["role"]
-                        content = message["content"]
-                        if role == "user":
-                            st.markdown(f'<div class="user-message">You: {content}</div>', unsafe_allow_html=True)
-                        else:
-                            st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {content}</div>', unsafe_allow_html=True)
-
-                    # Clear the input field
-                    #st.session_state.chat_query = ""
+                    for message in current_history:
+                        if message["role"] == "user":
+                            st.markdown(f'<div class="user-message">You: {message["content"]}</div>', unsafe_allow_html=True)
+                        elif message["role"] == "assistant":
+                            st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {message["content"]}</div>', unsafe_allow_html=True)
 
             except Exception as e:
                 st.error(f"Error generating response: {str(e)}")
         else:
             st.error("Please enter a message.")
+
 
 def main():
     st.set_page_config(page_title="Client Chat System",
@@ -257,8 +252,8 @@ def main():
     initialize_session_state()
     admin_interface()
 
-    if st.session_state.chat_mode:
-        chat_interface()
+   # if st.session_state.chat_mode:
+    chat_interface()
 
 
 if __name__ == "__main__":
