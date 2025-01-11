@@ -106,8 +106,8 @@ class RAGPipeline:
         self.anthropic_api_key = anthropic_api_key
         self.anthropic_client = Anthropic(api_key=anthropic_api_key)
 
-        self.RAGIE_UPLOAD_URL = "https://api.ragie.ai/documents/url"
-        self.RAGIE_RETRIEVAL_URL = "https://api.ragie.ai/retrievals"
+#        self.RAGIE_UPLOAD_URL = "https://api.ragie.ai/documents/url"
+#        self.RAGIE_RETRIEVAL_URL = "https://api.ragie.ai/retrievals"
 
     def upload_document(self, url: str, name: Optional[str] = None, mode: str = "fast") -> Dict:
         if not name:
