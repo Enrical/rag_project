@@ -6,18 +6,18 @@ from typing import List, Dict, Optional
 import json
 import os
 import bcrypt
-
-def load_user_data():
-    """Load user data from a JSON file."""
-    if os.path.exists("user_data.json"):
-        with open("user_data.json", "r") as file:
-            return json.load(file)
-    return {}
+import logging
+logging.basicConfig(level=logging.DEBUG)
 
 def save_user_data(user_data):
     """Save user data to a JSON file."""
+    logging.debug(f"Saving user data: {user_data}")
     with open("user_data.json", "w") as file:
         json.dump(user_data, file, indent=4)
+
+#with open("user_data.json", "w") as test_file:
+#    test_file.write("test")
+
 
 def ensure_user_data_file():
     """Ensure the user data file exists and is valid."""
@@ -25,6 +25,12 @@ def ensure_user_data_file():
         with open("user_data.json", "w") as file:
             json.dump({}, file)
 
+def load_user_data():
+    """Load user data from a JSON file."""
+    if os.path.exists("user_data.json"):
+        with open("user_data.json", "r") as file:
+            return json.load(file)
+    return {}
 
 def check_login():
     """Handle user login and conversation persistence."""
