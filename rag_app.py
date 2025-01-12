@@ -35,7 +35,8 @@ def save_user_data(user_data):
     try:
         with open("user_data.json", "w") as file:
             json.dump(user_data, file, indent=4)
-        #logging.debug(f"User data saved successfully: {user_data}")
+        # Debugging log to confirm save
+        logging.debug(f"User data saved successfully: {user_data}")
     except Exception as e:
         logging.error(f"Error saving user data: {str(e)}")
         raise Exception(f"Failed to save user data: {str(e)}")
@@ -58,8 +59,7 @@ def save_conversation(username, conversations):
     """Save the user's conversations to the data file."""
     user_data = load_user_data()
     if username in user_data:
-        # Preprocess conversations to ensure they are JSON serializable
-        user_data[username]["conversations"] = preprocess_conversations(conversations)
+        user_data[username]["conversations"] = conversations
         save_user_data(user_data)
 
 
@@ -243,40 +243,51 @@ def initialize_session_state():
 def chat_interface():
     st.markdown("### Chat with Enrique AI")
 
-    # Get Current Conversation History
-    current_history = st.session_state.conversations.get(st.session_state.current_conversation, [])
+    if not st.session_state.current_conversation:
+        st.info("Please create or select a conversation.")
+        new_convo_name = st.text_input("New Conversation Name")
+        if st.button("Create Conversation"):
+            if new_convo_name.strip():
+                st.session_state.conversations[new_convo_name] = []
+                st.session_state.current_conversation = new_convo_name
+                save_conversation(st.session_state.username, st.session_state.conversations)
+            else:
+                st.error("Conversation name cannot be empty.")
+        return
 
-    # Display Conversation History
+    current_history = st.session_state.conversations[st.session_state.current_conversation]
+
     for message in current_history:
         if message["role"] == "user":
             st.markdown(f"**You:** {message['content']}")
-        elif message["role"] == "assistant":
+        else:
             st.markdown(f"**Enrique AI:** {message['content']}")
 
-    # Input and Send Message
-    query = st.text_input("Your message", key="message_input")
-    if st.button("Send", key="send_message_button"):
+    query = st.text_input("Your message")
+    if st.button("Send"):
         if query.strip():
-            # Add User Message to Conversation
             current_history.append({"role": "user", "content": query})
 
             with st.spinner("Generating response..."):
-                try:
-                    # Retrieve Chunks (Mocked or Actual)
-                    chunks = ["example chunk"]  # Replace with actual retrieval logic
-                    system_prompt = st.session_state.pipeline.create_system_prompt(chunks)
+                chunks = ["Sample Document Content"]  # Replace with your actual retrieval logic
+                system_prompt = f"Respond based on: {chunks}"
 
-                    # Generate AI Response
-                    response = st.session_state.pipeline.generate_response(system_prompt, query, current_history)
+                # Generate response
+                response = st.session_state.pipeline.generate_response(system_prompt, query, current_history)
 
-                    # Add AI Response to Conversation
-                    current_history.append({"role": "assistant", "content": response})
-                except Exception as e:
-                    st.error(f"Error generating response: {str(e)}")
+                # Ensure the response is plain text
+                if isinstance(response, list):  # If response is a list (e.g., TextBlock objects)
+                    response = " ".join([str(item.text) if hasattr(item, 'text') else str(item) for item in response])
+                elif hasattr(response, "text"):  # If single TextBlock object
+                    response = response.text
+                elif not isinstance(response, str):
+                    response = str(response)
 
-            # Save Updated Conversation
-            st.session_state.conversations[st.session_state.current_conversation] = current_history
-            save_conversation(st.session_state.username, st.session_state.conversations)
+                # Add assistant response to the conversation
+                current_history.append({"role": "assistant", "content": response})
+
+                # Save updated conversation to user data
+                save_conversation(st.session_state.username, st.session_state.conversations)
 
 def main():
     st.set_page_config(page_title="Client Chat System", layout="wide")
