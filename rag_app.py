@@ -269,13 +269,17 @@ def chat_interface():
             current_history.append({"role": "user", "content": query})
 
             with st.spinner("Generating response..."):
-                chunks = ["Sample Document Content"]  # Replace with your actual retrieval logic
-                system_prompt = f"Respond based on: {chunks}"
+                # Load documents from `documents.json`
+                documents = load_documents()
+                chunks = list(documents.values())  # Use document content as chunks
+
+                # Create system prompt using loaded documents
+                system_prompt = st.session_state.pipeline.create_system_prompt(chunks)
 
                 # Generate response
                 response = st.session_state.pipeline.generate_response(system_prompt, query, current_history)
 
-                # Ensure the response is plain text
+                # Ensure response is plain text
                 if isinstance(response, list):  # If response is a list (e.g., TextBlock objects)
                     response = " ".join([str(item.text) if hasattr(item, 'text') else str(item) for item in response])
                 elif hasattr(response, "text"):  # If single TextBlock object
