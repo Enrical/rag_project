@@ -30,15 +30,27 @@ def load_user_data():
             json.dump({}, file)  # Reset to an empty JSON object
         return {}
 
-def save_user_data(user_data):
-    """Save user data to a JSON file."""
-    try:
-        with open("user_data.json", "w") as file:
-            json.dump(user_data, file, indent=4)
-        #logging.debug(f"User data saved successfully: {user_data}")
-    except Exception as e:
-        logging.error(f"Error saving user data: {str(e)}")
-        raise Exception(f"Failed to save user data: {str(e)}")
+def preprocess_conversations(conversations):
+    """Ensure all conversations are JSON serializable."""
+    processed_conversations = {}
+    for convo_name, messages in conversations.items():
+        processed_messages = []
+        for message in messages:
+            processed_message = {
+                "role": str(message["role"]),  # Ensure role is a string
+                "content": str(message["content"])  # Ensure content is a string
+            }
+            processed_messages.append(processed_message)
+        processed_conversations[convo_name] = processed_messages
+    return processed_conversations
+
+def save_conversation(username, conversations):
+    """Save the user's conversations to the data file."""
+    user_data = load_user_data()
+    if username in user_data:
+        # Preprocess conversations to ensure they are JSON serializable
+        user_data[username]["conversations"] = preprocess_conversations(conversations)
+        save_user_data(user_data)
 
 def check_login():
     """Handle user login and conversation persistence."""
