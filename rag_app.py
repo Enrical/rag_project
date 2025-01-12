@@ -9,7 +9,7 @@ import os
 import bcrypt
 import logging
 
-logging.basicConfig(level=logging.DEBUG)
+#logging.basicConfig(level=logging.DEBUG)
 
 
 def ensure_user_data_file():
@@ -174,7 +174,7 @@ class RAGPipeline:
             )
 
             # Log the complete response object for debugging
-            logging.debug(f"Complete API response object: {vars(response)}")
+            #logging.debug(f"Complete API response object: {vars(response)}")
 
             # Check if response has content attribute
             if hasattr(response, 'content'):
@@ -191,6 +191,15 @@ class RAGPipeline:
             if hasattr(e, '__dict__'):
                 logging.error(f"Error details: {vars(e)}")
             raise Exception(f"Failed to generate response: {str(e)}")
+        
+def load_documents():
+    """Load documents from a JSON file."""
+    try:
+        with open("documents.json", "r") as file:
+            return json.load(file)
+    except Exception as e:
+        st.error(f"Error loading documents.json: {str(e)}")
+        return {}
 
 def initialize_session_state():
     """Initialize session state variables."""
@@ -210,41 +219,41 @@ def initialize_session_state():
 
 
 
-    def chat_interface():
-        st.markdown("### Chat with Enrique AI")
+def chat_interface():
+    st.markdown("### Chat with Enrique AI")
 
-        if not st.session_state.current_conversation:
-            st.info("Please create or select a conversation.")
-            new_convo_name = st.text_input("New Conversation Name")
-            if st.button("Create Conversation"):
-                if new_convo_name.strip():
-                    st.session_state.conversations[new_convo_name] = []
-                    st.session_state.current_conversation = new_convo_name
-                    save_conversation(st.session_state.username, st.session_state.conversations)
-                else:
-                    st.error("Conversation name cannot be empty.")
-            return
-
-        current_history = st.session_state.conversations[st.session_state.current_conversation]
-
-        for message in current_history:
-            if message["role"] == "user":
-                st.markdown(f"**You:** {message['content']}")
+    if not st.session_state.current_conversation:
+        st.info("Please create or select a conversation.")
+        new_convo_name = st.text_input("New Conversation Name")
+        if st.button("Create Conversation"):
+            if new_convo_name.strip():
+                st.session_state.conversations[new_convo_name] = []
+                st.session_state.current_conversation = new_convo_name
+                save_conversation(st.session_state.username, st.session_state.conversations)
             else:
-                st.markdown(f"**Enrique AI:** {message['content']}")
+                st.error("Conversation name cannot be empty.")
+        return
 
-        query = st.text_input("Your message")
-        if st.button("Send"):
-            if query.strip():
-                current_history.append({"role": "user", "content": query})
+    current_history = st.session_state.conversations[st.session_state.current_conversation]
 
-                with st.spinner("Generating response..."):
-                    chunks = [str]  # Replace with actual retrieval logic
-                    system_prompt = f"Respond based on: {chunks}"
-                    response = st.session_state.pipeline.generate_response(system_prompt, query, current_history)
+    for message in current_history:
+        if message["role"] == "user":
+            st.markdown(f"**You:** {message['content']}")
+        else:
+            st.markdown(f"**Enrique AI:** {message['content']}")
 
-                    current_history.append({"role": "assistant", "content": response})
-                    save_conversation(st.session_state.username, st.session_state.conversations)
+    query = st.text_input("Your message")
+    if st.button("Send"):
+        if query.strip():
+            current_history.append({"role": "user", "content": query})
+
+            with st.spinner("Generating response..."):
+                chunks = [str]  # Replace with actual retrieval logic
+                system_prompt = f"Respond based on: {chunks}"
+                response = st.session_state.pipeline.generate_response(system_prompt, query, current_history)
+
+                current_history.append({"role": "assistant", "content": response})
+                save_conversation(st.session_state.username, st.session_state.conversations)
 
 
 def main():
