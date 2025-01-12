@@ -9,7 +9,7 @@ import os
 import bcrypt
 import logging
 
-logging.basicConfig(level=logging.DEBUG)
+#logging.basicConfig(level=logging.DEBUG)
 
 
 def ensure_user_data_file():
