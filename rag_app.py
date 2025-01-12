@@ -220,40 +220,81 @@ def initialize_session_state():
 
 
 def chat_interface():
-    st.markdown("### Chat with Enrique AI")
+    st.markdown(
+        """
+        <style>
+        .user-message {
+            color: black;
+            font-weight: normal;
+            margin-bottom: 10px;
+        }
+        .ai-message {
+            color: darkblue;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .st-key-chat_query{
+            display: flex;
+            flex-direction: column-reverse;
+            overflow-y: auto;
+            max-height: 60vh;
+        }        
+        /* Ensure child <p> elements inside .ai-message inherit the styles */
+        .ai-message p {
+        color: inherit; /* Use the color of the parent */
+        font-weight: inherit; /* Use the font weight of the parent */
+        }
+        .stButton {
+            display: flex;
+            flex-direction: column-reverse;
+            overflow-y: auto;
+            max-height: 60vh;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
-    if not st.session_state.current_conversation:
-        st.info("Please create or select a conversation.")
-        new_convo_name = st.text_input("New Conversation Name")
-        if st.button("Create Conversation"):
-            if new_convo_name.strip():
-                st.session_state.conversations[new_convo_name] = []
-                st.session_state.current_conversation = new_convo_name
-                save_conversation(st.session_state.username, st.session_state.conversations)
-            else:
-                st.error("Conversation name cannot be empty.")
+    st.markdown("### 🕵️‍♂️ Habla con Enrique AI")
+    if not st.session_state.pipeline:
+        st.error("The system is not configured yet. Please contact the administrator.")
         return
 
-    current_history = st.session_state.conversations[st.session_state.current_conversation]
+    chat_history = st.session_state.chat_history
 
-    for message in current_history:
-        if message["role"] == "user":
-            st.markdown(f"**You:** {message['content']}")
-        else:
-            st.markdown(f"**Enrique AI:** {message['content']}")
+    if chat_history:
+            for message in chat_history:
+                role = message["role"]
+                content = message["content"]
+                if role == "user":
+                    st.markdown(f'<div class="user-message">You: {content}</div>', unsafe_allow_html=True)
+                else:
+                    st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {content}</div>', unsafe_allow_html=True)
 
-    query = st.text_input("Your message")
-    if st.button("Send"):
+  
+    query = st.text_input("Escribe tu mensaje", key="chat_query")
+
+    if st.button("Enviar"):
         if query.strip():
-            current_history.append({"role": "user", "content": query})
+            try:
+                with st.spinner("Generating response..."):
+                    chunks = st.session_state.pipeline.retrieve_chunks(query)
+                    if not chunks:
+                        response = "No relevant information found."
+                    else:
+                        system_prompt = st.session_state.pipeline.create_system_prompt(chunks)
+                        response = st.session_state.pipeline.generate_response(system_prompt, query)
 
-            with st.spinner("Generating response..."):
-                chunks = [str]  # Replace with actual retrieval logic
-                system_prompt = f"Respond based on: {chunks}"
-                response = st.session_state.pipeline.generate_response(system_prompt, query, current_history)
+                    st.session_state.chat_history.append({"role": "user", "content": query})
+                    st.session_state.chat_history.append({"role": "assistant", "content": response})
 
-                current_history.append({"role": "assistant", "content": response})
-                save_conversation(st.session_state.username, st.session_state.conversations)
+                    st.markdown(f'<div class="user-message">You: {query}</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="ai-message">🕵️‍♂️Enrique AI: {response}</div>', unsafe_allow_html=True)
+
+            except Exception as e:
+                st.error(f"Error generating response: {str(e)}")
+        else:
+            st.error("Please enter a message.")
 
 
 def main():
