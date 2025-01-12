@@ -26,9 +26,16 @@ def load_user_data():
             return json.load(file)
     except json.JSONDecodeError:
         # If the file is invalid, reset it
+        logging.error("Invalid JSON file detected. Resetting user_data.json.")
         with open("user_data.json", "w") as file:
             json.dump({}, file)  # Reset to an empty JSON object
         return {}
+    except FileNotFoundError:
+        logging.error("user_data.json not found. Creating a new file.")
+        with open("user_data.json", "w") as file:
+            json.dump({}, file)  # Create the file if it doesn't exist
+        return {}
+
     
 def save_user_data(user_data):
     """Save user data to a JSON file."""
