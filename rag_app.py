@@ -192,21 +192,21 @@ class RAGPipeline:
                 logging.error(f"Error details: {vars(e)}")
             raise Exception(f"Failed to generate response: {str(e)}")
 
-    def initialize_session_state():
-        """Initialize session state variables."""
-        if 'pipeline' not in st.session_state:
-            try:
-                ragie_key = st.secrets["RAGIE_API_KEY"]
-                anthropic_key = st.secrets["ANTHROPIC_API_KEY"]
-                st.session_state.pipeline = RAGPipeline(ragie_key, anthropic_key)
-            except KeyError as e:
-                raise Exception(f"Missing API key in secrets: {str(e)}")
+def initialize_session_state():
+    """Initialize session state variables."""
+    if 'pipeline' not in st.session_state:
+        try:
+            ragie_key = st.secrets["RAGIE_API_KEY"]
+            anthropic_key = st.secrets["ANTHROPIC_API_KEY"]
+            st.session_state.pipeline = RAGPipeline(ragie_key, anthropic_key)
+        except KeyError as e:
+            raise Exception(f"Missing API key in secrets: {str(e)}")
 
-        if 'conversations' not in st.session_state:
-            st.session_state.conversations = {}
+    if 'conversations' not in st.session_state:
+        st.session_state.conversations = {}
 
-        if 'current_conversation' not in st.session_state:
-            st.session_state.current_conversation = None
+    if 'current_conversation' not in st.session_state:
+        st.session_state.current_conversation = None
 
 
 
