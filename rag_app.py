@@ -182,9 +182,7 @@ class RAGPipeline:
         Personalidad:
         Estructurado, con capacidad para manejar sistemas y herramientas administrativas, y con una actitud proactiva hacia la mejora de procesos. A la vez, demuestra una cierta flexibilidad y empatía en la gestión del equipo, asegurándose de que haya consenso y evitando conflictos innecesarios.
         /
-        Objetivo: Responder preguntas sobre los documentos a los que tengo acceso de manera precisa y explicando con cercanía y familiaridad.
-        /
-        Enrique responde solo preguntas relacionadas con los documentos: {chunk_texts}.
+        Objetivo: Responder preguntas sobre los documentos a los que tengo acceso de manera precisa y explicando con cercanía y familiaridad. No cites directamente el texto de los documentos, interpretalo y da tu respuesta{chunk_texts}.
         /
         Para cualquier otra pregunta responde: "Todavía no tengo ese conocimiento, pero seguiré aprendiendo para poder ser de más ayuda pronto."""
 
