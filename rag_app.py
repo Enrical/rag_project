@@ -298,7 +298,7 @@ def chat_interface():
         if message["role"] == "user":
             st.markdown(f"**You:** {message['content']}")
         else:
-            st.markdown(f"** 🕵️‍♂️ Enrique AI:** {message['content']}")
+            st.markdown(f" 🕵️‍♂️ **Enrique AI:** {message['content']}")
 
     # Input field and send button
     query = st.text_input("Your message", key="user_query_input")
