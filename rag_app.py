@@ -30,7 +30,7 @@ def load_user_data():
             json.dump({}, file)  # Reset to an empty JSON object
         return {}
 
-def save_user_data(user_data):
+def save_user_data():
     """Save user data to a JSON file."""
     try:
         with open("user_data.json", "w") as file:
