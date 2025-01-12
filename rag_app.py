@@ -275,7 +275,8 @@ def chat_interface():
 
                 # Create system prompt using loaded documents
                 system_prompt = st.session_state.pipeline.create_system_prompt(chunks)
-
+                
+                logging.debug(f"System Prompt: {system_prompt}")
                 # Generate response
                 response = st.session_state.pipeline.generate_response(system_prompt, query, current_history)
 
