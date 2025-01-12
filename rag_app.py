@@ -9,7 +9,7 @@ import os
 import bcrypt
 import logging
 
-#logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 
 
 def ensure_user_data_file():
@@ -30,7 +30,7 @@ def load_user_data():
             json.dump({}, file)  # Reset to an empty JSON object
         return {}
 
-def save_user_data():
+def save_user_data(user_data):
     """Save user data to a JSON file."""
     try:
         with open("user_data.json", "w") as file:
@@ -259,12 +259,12 @@ class RAGPipeline:
             check_login()
             if st.session_state.logged_in:
                 st.sidebar.write(f"Welcome, {st.session_state.username}")
-    initialize_session_state()
-    st.sidebar.markdown("## Conversations")
-    for convo in st.session_state.conversations.keys():
-        if st.sidebar.button(convo):
-            st.session_state.current_conversation = convo
-    chat_interface()
+                initialize_session_state()
+                st.sidebar.markdown("## Conversations")
+                for convo in st.session_state.conversations.keys():
+                    if st.sidebar.button(convo):
+                        st.session_state.current_conversation = convo
+                chat_interface()
 
 
 if __name__ == "__main__":
