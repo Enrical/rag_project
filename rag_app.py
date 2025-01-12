@@ -217,105 +217,74 @@ def initialize_session_state():
     if 'current_conversation' not in st.session_state:
         st.session_state.current_conversation = None
 
-
-
 def chat_interface():
-    st.markdown(
-        """
-        <style>
-        .user-message {
-            color: black;
-            font-weight: normal;
-            margin-bottom: 10px;
-        }
-        .ai-message {
-            color: darkblue;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-        .st-key-chat_query{
-            display: flex;
-            flex-direction: column-reverse;
-            overflow-y: auto;
-            max-height: 60vh;
-        }        
-        /* Ensure child <p> elements inside .ai-message inherit the styles */
-        .ai-message p {
-        color: inherit; /* Use the color of the parent */
-        font-weight: inherit; /* Use the font weight of the parent */
-        }
-        .stButton {
-            display: flex;
-            flex-direction: column-reverse;
-            overflow-y: auto;
-            max-height: 60vh;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
+    st.markdown("### Chat with Enrique AI")
 
-    st.markdown("### 🕵️‍♂️ Habla con Enrique AI")
-    if not st.session_state.pipeline:
-        st.error("The system is not configured yet. Please contact the administrator.")
-        return
+    # Get Current Conversation History
+    current_history = st.session_state.conversations.get(st.session_state.current_conversation, [])
 
-    chat_history = st.session_state.chat_history
+    # Display Conversation History
+    for message in current_history:
+        if message["role"] == "user":
+            st.markdown(f"**You:** {message['content']}")
+        elif message["role"] == "assistant":
+            st.markdown(f"**Enrique AI:** {message['content']}")
 
-    if chat_history:
-            for message in chat_history:
-                role = message["role"]
-                content = message["content"]
-                if role == "user":
-                    st.markdown(f'<div class="user-message">You: {content}</div>', unsafe_allow_html=True)
-                else:
-                    st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {content}</div>', unsafe_allow_html=True)
-
-  
-    query = st.text_input("Escribe tu mensaje", key="chat_query")
-
-    if st.button("Enviar"):
+    # Input and Send Message
+    query = st.text_input("Your message", key="message_input")
+    if st.button("Send", key="send_message_button"):
         if query.strip():
-            try:
-                with st.spinner("Generating response..."):
-                    chunks = st.session_state.pipeline.retrieve_chunks(query)
-                    if not chunks:
-                        response = "No relevant information found."
-                    else:
-                        system_prompt = st.session_state.pipeline.create_system_prompt(chunks)
-                        response = st.session_state.pipeline.generate_response(system_prompt, query)
+            # Add User Message to Conversation
+            current_history.append({"role": "user", "content": query})
 
-                    st.session_state.chat_history.append({"role": "user", "content": query})
-                    st.session_state.chat_history.append({"role": "assistant", "content": response})
+            with st.spinner("Generating response..."):
+                try:
+                    # Retrieve Chunks (Mocked or Actual)
+                    chunks = ["example chunk"]  # Replace with actual retrieval logic
+                    system_prompt = st.session_state.pipeline.create_system_prompt(chunks)
 
-                    st.markdown(f'<div class="user-message">You: {query}</div>', unsafe_allow_html=True)
-                    st.markdown(f'<div class="ai-message">🕵️‍♂️Enrique AI: {response}</div>', unsafe_allow_html=True)
+                    # Generate AI Response
+                    response = st.session_state.pipeline.generate_response(system_prompt, query, current_history)
 
-            except Exception as e:
-                st.error(f"Error generating response: {str(e)}")
-        else:
-            st.error("Please enter a message.")
+                    # Add AI Response to Conversation
+                    current_history.append({"role": "assistant", "content": response})
+                except Exception as e:
+                    st.error(f"Error generating response: {str(e)}")
 
+            # Save Updated Conversation
+            st.session_state.conversations[st.session_state.current_conversation] = current_history
+            save_conversation(st.session_state.username, st.session_state.conversations)
 
 def main():
     st.set_page_config(page_title="Client Chat System", layout="wide")
 
     ensure_user_data_file()
 
+    # Login and Register Options
     option = st.sidebar.selectbox("Choose an option", ["Login", "Register"])
+
     if option == "Register":
         register_user()
     elif option == "Login":
         check_login()
 
-    if st.session_state.logged_in:
+    # Show chat interface if logged in
+    if st.session_state.get("logged_in", False):
         st.sidebar.write(f"Welcome, {st.session_state.username}")
         initialize_session_state()
+
+        # List and Select Conversations
         st.sidebar.markdown("## Conversations")
         for convo in st.session_state.conversations.keys():
-            if st.sidebar.button(convo):
+            if st.sidebar.button(convo, key=f"select_convo_{convo}"):
                 st.session_state.current_conversation = convo
-                chat_interface()
+
+        # Display Chat Interface
+        if st.session_state.current_conversation:
+            chat_interface()
+        else:
+            st.info("Please select or create a conversation to start chatting.")
+
 
 
 if __name__ == "__main__":
