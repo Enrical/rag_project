@@ -247,23 +247,24 @@ class RAGPipeline:
                     save_conversation(st.session_state.username, st.session_state.conversations)
 
 
-    def main():
-        st.set_page_config(page_title="Client Chat System", layout="wide")
+def main():
+    st.set_page_config(page_title="Client Chat System", layout="wide")
 
-        ensure_user_data_file()
+    ensure_user_data_file()
 
-        option = st.sidebar.selectbox("Choose an option", ["Login", "Register"])
-        if option == "Register":
-            register_user()
-        elif option == "Login":
-            check_login()
-            if st.session_state.logged_in:
-                st.sidebar.write(f"Welcome, {st.session_state.username}")
-                initialize_session_state()
-                st.sidebar.markdown("## Conversations")
-                for convo in st.session_state.conversations.keys():
-                    if st.sidebar.button(convo):
-                        st.session_state.current_conversation = convo
+    option = st.sidebar.selectbox("Choose an option", ["Login", "Register"])
+    if option == "Register":
+        register_user()
+    elif option == "Login":
+        check_login()
+
+    if st.session_state.logged_in:
+        st.sidebar.write(f"Welcome, {st.session_state.username}")
+        initialize_session_state()
+        st.sidebar.markdown("## Conversations")
+        for convo in st.session_state.conversations.keys():
+            if st.sidebar.button(convo):
+                st.session_state.current_conversation = convo
                 chat_interface()
 
 
