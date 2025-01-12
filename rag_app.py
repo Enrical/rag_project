@@ -275,17 +275,28 @@ def main():
 
         # List and Select Conversations
         st.sidebar.markdown("## Conversations")
-        for convo in st.session_state.conversations.keys():
-            if st.sidebar.button(convo, key=f"select_convo_{convo}"):
-                st.session_state.current_conversation = convo
+        if st.session_state.conversations:
+            for convo in st.session_state.conversations.keys():
+                if st.sidebar.button(convo, key=f"select_convo_{convo}"):
+                    st.session_state.current_conversation = convo
+
+        # Option to Create a New Conversation
+        with st.sidebar.expander("Create a New Conversation"):
+            new_convo_name = st.text_input("Conversation Name", key="new_convo_name")
+            if st.button("Create Conversation", key="create_new_convo"):
+                if new_convo_name.strip():
+                    st.session_state.conversations[new_convo_name] = []
+                    st.session_state.current_conversation = new_convo_name
+                    save_conversation(st.session_state.username, st.session_state.conversations)
+                    st.success(f"Conversation '{new_convo_name}' created!")
+                else:
+                    st.error("Conversation name cannot be empty.")
 
         # Display Chat Interface
         if st.session_state.current_conversation:
             chat_interface()
         else:
             st.info("Please select or create a conversation to start chatting.")
-
-
 
 if __name__ == "__main__":
     main()
