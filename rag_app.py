@@ -158,93 +158,93 @@ class RAGPipeline:
         /
         Para cualquier otra pregunta responde: "Todavía no tengo ese conocimiento, pero seguiré aprendiendo para poder ser de más ayuda pronto."""
 
-def generate_response(self, system_prompt: str, query: str, conversation_history: list = None) -> str:
-    if conversation_history is None:
-        conversation_history = []
+    def generate_response(self, system_prompt: str, query: str, conversation_history: list = None) -> str:
+        if conversation_history is None:
+            conversation_history = []
 
-    messages = conversation_history + [{"role": "user", "content": query}]
+        messages = conversation_history + [{"role": "user", "content": query}]
 
-    try:
-        # Make the API request
-        response = self.anthropic_client.messages.create(
-            model="claude-3-sonnet-20240229",
-            max_tokens=1024,
-            system=system_prompt,
-            messages=messages
-        )
-
-        # Log the complete response object for debugging
-        logging.debug(f"Complete API response object: {vars(response)}")
-
-        # Check if response has content attribute
-        if hasattr(response, 'content'):
-            return response.content
-        elif hasattr(response, 'completion'):
-            return response.completion
-        else:
-            # Log the response structure
-            logging.error(f"Unexpected response structure. Available attributes: {dir(response)}")
-            raise ValueError(f"Unexpected response structure. Response type: {type(response)}")
-
-    except Exception as e:
-        logging.error(f"Error in generate_response: {type(e).__name__}: {str(e)}")
-        if hasattr(e, '__dict__'):
-            logging.error(f"Error details: {vars(e)}")
-        raise Exception(f"Failed to generate response: {str(e)}")
-
-def initialize_session_state():
-    """Initialize session state variables."""
-    if 'pipeline' not in st.session_state:
         try:
-            ragie_key = st.secrets["RAGIE_API_KEY"]
-            anthropic_key = st.secrets["ANTHROPIC_API_KEY"]
-            st.session_state.pipeline = RAGPipeline(ragie_key, anthropic_key)
-        except KeyError as e:
-            raise Exception(f"Missing API key in secrets: {str(e)}")
+            # Make the API request
+            response = self.anthropic_client.messages.create(
+                model="claude-3-sonnet-20240229",
+                max_tokens=1024,
+                system=system_prompt,
+                messages=messages
+            )
 
-    if 'conversations' not in st.session_state:
-        st.session_state.conversations = {}
+            # Log the complete response object for debugging
+            logging.debug(f"Complete API response object: {vars(response)}")
 
-    if 'current_conversation' not in st.session_state:
-        st.session_state.current_conversation = None
-
-
-
-def chat_interface():
-    st.markdown("### Chat with Enrique AI")
-
-    if not st.session_state.current_conversation:
-        st.info("Please create or select a conversation.")
-        new_convo_name = st.text_input("New Conversation Name")
-        if st.button("Create Conversation"):
-            if new_convo_name.strip():
-                st.session_state.conversations[new_convo_name] = []
-                st.session_state.current_conversation = new_convo_name
-                save_conversation(st.session_state.username, st.session_state.conversations)
+            # Check if response has content attribute
+            if hasattr(response, 'content'):
+                return response.content
+            elif hasattr(response, 'completion'):
+                return response.completion
             else:
-                st.error("Conversation name cannot be empty.")
-        return
+                # Log the response structure
+                logging.error(f"Unexpected response structure. Available attributes: {dir(response)}")
+                raise ValueError(f"Unexpected response structure. Response type: {type(response)}")
 
-    current_history = st.session_state.conversations[st.session_state.current_conversation]
+        except Exception as e:
+            logging.error(f"Error in generate_response: {type(e).__name__}: {str(e)}")
+            if hasattr(e, '__dict__'):
+                logging.error(f"Error details: {vars(e)}")
+            raise Exception(f"Failed to generate response: {str(e)}")
 
-    for message in current_history:
-        if message["role"] == "user":
-            st.markdown(f"**You:** {message['content']}")
-        else:
-            st.markdown(f"**Enrique AI:** {message['content']}")
+    def initialize_session_state():
+        """Initialize session state variables."""
+        if 'pipeline' not in st.session_state:
+            try:
+                ragie_key = st.secrets["RAGIE_API_KEY"]
+                anthropic_key = st.secrets["ANTHROPIC_API_KEY"]
+                st.session_state.pipeline = RAGPipeline(ragie_key, anthropic_key)
+            except KeyError as e:
+                raise Exception(f"Missing API key in secrets: {str(e)}")
 
-    query = st.text_input("Your message")
-    if st.button("Send"):
-        if query.strip():
-            current_history.append({"role": "user", "content": query})
+        if 'conversations' not in st.session_state:
+            st.session_state.conversations = {}
 
-            with st.spinner("Generating response..."):
-                chunks = [str]  # Replace with actual retrieval logic
-                system_prompt = f"Respond based on: {chunks}"
-                response = st.session_state.pipeline.generate_response(system_prompt, query, current_history)
+        if 'current_conversation' not in st.session_state:
+            st.session_state.current_conversation = None
 
-                current_history.append({"role": "assistant", "content": response})
-                save_conversation(st.session_state.username, st.session_state.conversations)
+
+
+    def chat_interface():
+        st.markdown("### Chat with Enrique AI")
+
+        if not st.session_state.current_conversation:
+            st.info("Please create or select a conversation.")
+            new_convo_name = st.text_input("New Conversation Name")
+            if st.button("Create Conversation"):
+                if new_convo_name.strip():
+                    st.session_state.conversations[new_convo_name] = []
+                    st.session_state.current_conversation = new_convo_name
+                    save_conversation(st.session_state.username, st.session_state.conversations)
+                else:
+                    st.error("Conversation name cannot be empty.")
+            return
+
+        current_history = st.session_state.conversations[st.session_state.current_conversation]
+
+        for message in current_history:
+            if message["role"] == "user":
+                st.markdown(f"**You:** {message['content']}")
+            else:
+                st.markdown(f"**Enrique AI:** {message['content']}")
+
+        query = st.text_input("Your message")
+        if st.button("Send"):
+            if query.strip():
+                current_history.append({"role": "user", "content": query})
+
+                with st.spinner("Generating response..."):
+                    chunks = [str]  # Replace with actual retrieval logic
+                    system_prompt = f"Respond based on: {chunks}"
+                    response = st.session_state.pipeline.generate_response(system_prompt, query, current_history)
+
+                    current_history.append({"role": "assistant", "content": response})
+                    save_conversation(st.session_state.username, st.session_state.conversations)
 
 
 def main():
