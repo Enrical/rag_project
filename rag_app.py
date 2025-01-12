@@ -35,7 +35,7 @@ def save_user_data(user_data):
     try:
         with open("user_data.json", "w") as file:
             json.dump(user_data, file, indent=4)
-        logging.debug(f"User data saved successfully: {user_data}")
+        #logging.debug(f"User data saved successfully: {user_data}")
     except Exception as e:
         logging.error(f"Error saving user data: {str(e)}")
         raise Exception(f"Failed to save user data: {str(e)}")
