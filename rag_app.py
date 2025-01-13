@@ -301,12 +301,12 @@ def chat_interface():
 
 # Display the full chat history
     chat_placeholder = st.empty()  # Placeholder to dynamically update the chat
-    with chat_placeholder.container():
-        for message in current_history:
-            if message["role"] == "user":
-                st.markdown(f'<div class="user-message">You: {message["content"]}</div>', unsafe_allow_html=True)
-            elif message["role"] == "assistant":
-                st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {message["content"]}</div>', unsafe_allow_html=True)
+#    with chat_placeholder.container():
+#        for message in current_history:
+#            if message["role"] == "user":
+#                st.markdown(f'<div class="user-message">You: {message["content"]}</div>', unsafe_allow_html=True)
+#            elif message["role"] == "assistant":
+#                st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {message["content"]}</div>', unsafe_allow_html=True)
 
 
     # Display the conversation history
