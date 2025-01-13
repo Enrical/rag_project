@@ -351,8 +351,17 @@ def chat_interface():
                             response = "No relevant information found."
 
                         # Append assistant's response to the current conversation
-                        current_history.append({"role": "assistant", "content": response})
-                  
+    #                    current_history.append({"role": "assistant", "content": response})
+
+          
+                    # Update chat dynamically
+  #                  with chat_placeholder.container():
+  #                      for message in current_history:
+  #                          if message["role"] == "user":
+  #                              st.markdown(f'<div class="user-message">You: {message["content"]}</div>', unsafe_allow_html=True)
+  #                          elif message["role"] == "assistant":
+  #                              st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {message["content"]}</div>', unsafe_allow_html=True)
+            
                     # Ensure response is a plain string
                     if isinstance(response, list):  # If response is a list (e.g., TextBlock objects)
                         response = " ".join([str(item.text) if hasattr(item, 'text') else str(item) for item in response])
@@ -360,7 +369,10 @@ def chat_interface():
                         response = response.text
                     elif not isinstance(response, str):
                         response = str(response)
-          
+
+                    # Append assistant's response to the current conversation
+                    current_history.append({"role": "assistant", "content": response})
+                  
                     # Update chat dynamically
                     with chat_placeholder.container():
                         for message in current_history:
@@ -368,7 +380,11 @@ def chat_interface():
                                 st.markdown(f'<div class="user-message">You: {message["content"]}</div>', unsafe_allow_html=True)
                             elif message["role"] == "assistant":
                                 st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {message["content"]}</div>', unsafe_allow_html=True)
-            
+
+  # Save the updated conversation
+                    save_conversation(st.session_state.username, st.session_state.conversations)
+
+
                 except Exception as e:
                     st.error(f"Error generating response: {str(e)}")
             else:
