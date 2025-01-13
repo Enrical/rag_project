@@ -350,19 +350,30 @@ def chat_interface():
                     else:
                         response = "No relevant information found."
 
+   # Ensure response is a plain string
+                if isinstance(response, list):  # If response is a list (e.g., TextBlock objects)
+                    response = " ".join([str(item.text) if hasattr(item, 'text') else str(item) for item in response])
+                elif hasattr(response, "text"):  # If single TextBlock object
+                    response = response.text
+                elif not isinstance(response, str):
+                    response = str(response)
+
                     # Append assistant's response to the current conversation
                     current_history.append({"role": "assistant", "content": response})
+          # Save the updated conversation
+                    st.session_state.current_history = current_history
+                    st.session_state.conversations[st.session_state.username] = current_history
 
             except Exception as e:
                 st.error(f"An error occurred: {e}")
 
             # Update chat dynamically
-            with chat_placeholder.container():
-                for message in current_history:
-                    if message["role"] == "user":
-                        st.markdown(f'<div class="user-message">You: {message["content"]}</div>', unsafe_allow_html=True)
-                    elif message["role"] == "assistant":
-                        st.markdown(f'<div class="assistant-message">Assistant: {message["content"]}</div>', unsafe_allow_html=True)
+#            with chat_placeholder.container():
+ #               for message in current_history:
+  #                  if message["role"] == "user":
+   #                     st.markdown(f'<div class="user-message">You: {message["content"]}</div>', unsafe_allow_html=True)
+    #                elif message["role"] == "assistant":
+     #                   st.markdown(f'<div class="assistant-message">Assistant: {message["content"]}</div>', unsafe_allow_html=True)
 
                 # Save the updated conversation
                 try:
