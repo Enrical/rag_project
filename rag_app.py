@@ -11,42 +11,58 @@ import logging
 
 #logging.basicConfig(level=logging.DEBUG)
 
+def get_user_data_file_path():
+    """Determine the correct path for user_data.json."""
+    if st.secrets.get("PERSISTENT_STORAGE_PATH"):
+        return os.path.join(st.secrets["PERSISTENT_STORAGE_PATH"], "user_data.json")
+    return "user_data.json"
+
 
 def ensure_user_data_file():
     """Ensure the user data file exists and is valid JSON."""
-    if not os.path.exists("user_data.json"):
-        with open("user_data.json", "w") as file:
+    file_path = get_user_data_file_path()
+    if not os.path.exists(file_path):
+        with open(file_path, "w") as file:
             json.dump({}, file)
 
 
 def load_user_data():
     """Load user data from a JSON file."""
+    file_path = get_user_data_file_path()
     try:
-        with open("user_data.json", "r") as file:
+        with open(file_path, "r") as file:
             return json.load(file)
     except json.JSONDecodeError:
         # If the file is invalid, reset it
         logging.error("Invalid JSON file detected. Resetting user_data.json.")
-        with open("user_data.json", "w") as file:
+        with open(file_path, "w") as file:
             json.dump({}, file)  # Reset to an empty JSON object
         return {}
     except FileNotFoundError:
         logging.error("user_data.json not found. Creating a new file.")
-        with open("user_data.json", "w") as file:
+        with open(file_path, "w") as file:
             json.dump({}, file)  # Create the file if it doesn't exist
         return {}
 
     
 def save_user_data(user_data):
     """Save user data to a JSON file."""
+    file_path = get_user_data_file_path()
     try:
-        with open("user_data.json", "w") as file:
+        with open(file_path, "w") as file:
             json.dump(user_data, file, indent=4)
         # Debugging log to confirm save
         logging.debug(f"User data saved successfully: {user_data}")
     except Exception as e:
         logging.error(f"Error saving user data: {str(e)}")
         raise Exception(f"Failed to save user data: {str(e)}")
+    
+def load_user_data_from_secrets():
+    return json.loads(st.secrets.get("USER_DATA", "{}"))
+
+def save_user_data_to_secrets(user_data):
+    st.secrets["USER_DATA"] = json.dumps(user_data)
+
     
 def preprocess_conversations(conversations):
     """Ensure all conversations are JSON serializable."""
