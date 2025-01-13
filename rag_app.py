@@ -245,7 +245,7 @@ def initialize_session_state():
 
     if 'current_conversation' not in st.session_state:
         st.session_state.current_conversation = None
-
+        
 def chat_interface():
     st.markdown(
         """
@@ -260,33 +260,16 @@ def chat_interface():
             font-weight: bold;
             margin-bottom: 10px;
         }
-        .st-key-chat_query{
-            display: flex;
-            flex-direction: column-reverse;
-            overflow-y: auto;
-            max-height: 60vh;
-        }        
-        /* Ensure child <p> elements inside .ai-message inherit the styles */
-        .ai-message p {
-        color: inherit; /* Use the color of the parent */
-        font-weight: inherit; /* Use the font weight of the parent */
-        }
-        .stButton {
-            display: flex;
-            flex-direction: column-reverse;
-            overflow-y: auto;
-            max-height: 60vh;
-        }
         </style>
         """,
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
     # Ensure a conversation is selected or created
     if not st.session_state.current_conversation:
         st.info("Please create or select a conversation.")
-        new_convo_name = st.text_input("New Conversation Name")
-        if st.button("Create Conversation"):
+        new_convo_name = st.text_input("New Conversation Name", key="new_convo_name")
+        if st.button("Create Conversation", key="create_convo_button"):
             if new_convo_name.strip():
                 st.session_state.conversations[new_convo_name] = []
                 st.session_state.current_conversation = new_convo_name
@@ -296,131 +279,70 @@ def chat_interface():
                 st.error("Conversation name cannot be empty.")
         return
 
-    # Get the current conversation history
-    current_history = st.session_state.conversations[st.session_state.current_conversation]
+    # Display the current conversation history
+    current_history = st.session_state.conversations.get(st.session_state.current_conversation, [])
+    chat_placeholder = st.empty()  # Placeholder for chat messages
 
-# Display the full chat history
-    chat_placeholder = st.empty()  # Placeholder to dynamically update the chat
-#    with chat_placeholder.container():
-#        for message in current_history:
-#            if message["role"] == "user":
-#                st.markdown(f'<div class="user-message">You: {message["content"]}</div>', unsafe_allow_html=True)
-#            elif message["role"] == "assistant":
-#                st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {message["content"]}</div>', unsafe_allow_html=True)
+    with chat_placeholder.container():
+        for message in current_history:
+            if message["role"] == "user":
+                st.markdown(f'<div class="user-message">**You:** {message["content"]}</div>', unsafe_allow_html=True)
+            else:
+                st.markdown(
+                    f'<div class="ai-message">🕵️‍♂️ **Enrique AI:** {message["content"]}</div>',
+                    unsafe_allow_html=True,
+                )
 
-
-    # Display the conversation history
-    for message in current_history:
-        if message["role"] == "user":
-            st.markdown(f"**You:** {message['content']}")
-        else:
-            st.markdown(f" 🕵️‍♂️ **Enrique AI:** {message['content']}")
-
-    # Input field and send button
-#    query = st.text_input("Your message", key="user_query_input")
-
-    # Use a Streamlit form to ensure both input and button work in the same rerender cycle
-#    with st.form(key="send_message_form"):
-#        submit = st.form_submit_button("Send")
-
-    # Handle the message submission
-   # if submit and query.strip():
-        # Append user message to the conversation
-    #    current_history.append({"role": "user", "content": query})
-
-    # Input and form for handling Enter or button click
+    # Chat input form
     with st.form(key="chat_form", clear_on_submit=True):
-        query = st.text_input("Escribe tu mensaje", value="", key="chat_query")
-        submit_button = st.form_submit_button("Enviar")
+        query = st.text_input("Your message", key="user_query")
+        submit_button = st.form_submit_button("Send")
 
-    if submit_button:
-        if query.strip():
+    # Handle user input and AI response
+    if submit_button and query.strip():
+        # Append user message to the conversation
+        current_history.append({"role": "user", "content": query})
+
+        with st.spinner("Generating response..."):
             try:
-                  # Append user's query to the current conversation
-                current_history = st.session_state.get('current_history', [])
-                current_history.append({"role": "user", "content": query})
+                # Retrieve document chunks for context
+                chunks = st.session_state.pipeline.retrieve_chunks(query)
+                if chunks:
+                    system_prompt = st.session_state.pipeline.create_system_prompt(chunks)
+                    response = st.session_state.pipeline.generate_response(system_prompt, query, current_history)
+                else:
+                    response = "No relevant information found."
 
-                # Generate the assistant's response
-                with st.spinner("Generando respuesta..."):
-                    chunks = st.session_state.pipeline.retrieve_chunks(query)
-                    if chunks:
-                        system_prompt = st.session_state.pipeline.create_system_prompt(chunks)
-                        response = st.session_state.pipeline.generate_response(
-                            system_prompt, query, current_history
-                        )
-                    else:
-                        response = "No relevant information found."
-
-   # Ensure response is a plain string
-                if isinstance(response, list):  # If response is a list (e.g., TextBlock objects)
-                    response = " ".join([str(item.text) if hasattr(item, 'text') else str(item) for item in response])
-                elif hasattr(response, "text"):  # If single TextBlock object
+                # Ensure response is a plain string
+                if isinstance(response, list):
+                    response = " ".join(
+                        [str(item.text) if hasattr(item, "text") else str(item) for item in response]
+                    )
+                elif hasattr(response, "text"):
                     response = response.text
                 elif not isinstance(response, str):
                     response = str(response)
 
-                    # Append assistant's response to the current conversation
-                    current_history.append({"role": "assistant", "content": response})
-          # Save the updated conversation
-                    st.session_state.current_history = current_history
-                    st.session_state.conversations[st.session_state.username] = current_history
+                # Append AI response to the conversation
+                current_history.append({"role": "assistant", "content": response})
 
-                try:
-                    save_conversation(st.session_state.username, st.session_state.conversations)
-                except TypeError as e:
-                    st.error(f"Failed to save conversation: {e}")
+                # Save updated conversation
+                st.session_state.conversations[st.session_state.current_conversation] = current_history
+                save_conversation(st.session_state.username, st.session_state.conversations)
 
             except Exception as e:
-                st.error(f"Error generating response: {e}")
+                st.error(f"Error generating response: {str(e)}")
 
-  # Update chat dynamically
+    # Refresh the chat interface dynamically
     with chat_placeholder.container():
-        current_history = st.session_state.get('current_history', [])
         for message in current_history:
             if message["role"] == "user":
-                st.markdown(f'<div class="user-message">You: {message["content"]}</div>', unsafe_allow_html=True)
-            elif message["role"] == "assistant":
-                st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {message["content"]}</div>', unsafe_allow_html=True)
-                # Save the updated conversation
-#                try:
-#                    save_conversation(st.session_state.username, st.session_state.conversations)
-#                except TypeError as e:
-#                    st.error(f"Failed to save conversation: {e}")
-
-#                except Exception as e:
-#                    st.error(f"Error generating response: {str(e)}")
-#                else:
-#                    st.error("Please enter a message.")
-
-        # Generate AI response
-  #      with st.spinner("Generating response..."):
-  #          try:
-                # Load documents for context
-  #              documents = load_documents()
-  #              chunks = list(documents.values())  # Use document content as chunks
-
-                # Create system prompt
- #               system_prompt = st.session_state.pipeline.create_system_prompt(chunks)
-
-                # Generate response
- #               response = st.session_state.pipeline.generate_response(system_prompt, query, current_history)
-
-                # Ensure response is a plain string
- #               if isinstance(response, list):  # If response is a list (e.g., TextBlock objects)
- #                   response = " ".join([str(item.text) if hasattr(item, 'text') else str(item) for item in response])
- #               elif hasattr(response, "text"):  # If single TextBlock object
- #                   response = response.text
-#                elif not isinstance(response, str):
-#                    response = str(response)
-
-                # Append AI response to the conversation
-#                current_history.append({"role": "assistant", "content": response})
-
-                # Save the updated conversation
-#                save_conversation(st.session_state.username, st.session_state.conversations)
-
-#            except Exception as e:
-#                st.error(f"Error generating response: {str(e)}")
+                st.markdown(f'<div class="user-message">**You:** {message["content"]}</div>', unsafe_allow_html=True)
+            else:
+                st.markdown(
+                    f'<div class="ai-message">🕵️‍♂️ **Enrique AI:** {message["content"]}</div>',
+                    unsafe_allow_html=True,
+                )
 
 def main():
     st.set_page_config(page_title="Client Chat System", layout="wide")
