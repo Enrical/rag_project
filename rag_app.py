@@ -364,8 +364,13 @@ def chat_interface():
                     st.session_state.current_history = current_history
                     st.session_state.conversations[st.session_state.username] = current_history
 
+                try:
+                    save_conversation(st.session_state.username, st.session_state.conversations)
+                except TypeError as e:
+                    st.error(f"Failed to save conversation: {e}")
+
             except Exception as e:
-                st.error(f"An error occurred: {e}")
+                st.error(f"Error generating response: {e}")
 
             # Update chat dynamically
             with chat_placeholder.container():
@@ -376,15 +381,15 @@ def chat_interface():
                         st.markdown(f'<div class="assistant-message">Assistant: {message["content"]}</div>', unsafe_allow_html=True)
 
                 # Save the updated conversation
-                try:
-                    save_conversation(st.session_state.username, st.session_state.conversations)
-                except TypeError as e:
-                    st.error(f"Failed to save conversation: {e}")
+#                try:
+#                    save_conversation(st.session_state.username, st.session_state.conversations)
+#                except TypeError as e:
+#                    st.error(f"Failed to save conversation: {e}")
 
-                except Exception as e:
-                    st.error(f"Error generating response: {str(e)}")
-                else:
-                    st.error("Please enter a message.")
+#                except Exception as e:
+#                    st.error(f"Error generating response: {str(e)}")
+#                else:
+#                    st.error("Please enter a message.")
 
         # Generate AI response
   #      with st.spinner("Generating response..."):
