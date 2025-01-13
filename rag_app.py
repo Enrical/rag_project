@@ -297,7 +297,7 @@ def chat_interface():
         return
 
     # Get the current conversation history
-    current_history = st.session_state.conversations[st.session_state.current_conversation]
+#    current_history = st.session_state.conversations[st.session_state.current_conversation]
 
 # Display the full chat history
     chat_placeholder = st.empty()  # Placeholder to dynamically update the chat
@@ -310,11 +310,11 @@ def chat_interface():
 
 
     # Display the conversation history
- #   for message in current_history:
- #       if message["role"] == "user":
- #           st.markdown(f"**You:** {message['content']}")
- #       else:
- #           st.markdown(f" 🕵️‍♂️ **Enrique AI:** {message['content']}")
+    for message in current_history:
+        if message["role"] == "user":
+            st.markdown(f"**You:** {message['content']}")
+        else:
+            st.markdown(f" 🕵️‍♂️ **Enrique AI:** {message['content']}")
 
     # Input field and send button
 #    query = st.text_input("Your message", key="user_query_input")
