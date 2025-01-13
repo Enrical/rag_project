@@ -351,7 +351,7 @@ def chat_interface():
                         response = "No relevant information found."
 
                     # Append assistant's response to the current conversation
-    #                current_history.append({"role": "assistant", "content": response})
+                    current_history.append({"role": "assistant", "content": response})
 
             except Exception as e:
                 st.error(f"An error occurred: {e}")
