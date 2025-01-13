@@ -371,7 +371,7 @@ def chat_interface():
                         response = str(response)
 
                     # Append assistant's response to the current conversation
-    #                current_history.append({"role": "assistant", "content": response})
+                    current_history.append({"role": "assistant", "content": response})
                   
                     # Update chat dynamically
                     with chat_placeholder.container():
