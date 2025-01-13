@@ -337,10 +337,10 @@ def chat_interface():
     with chat_placeholder.container():
         for message in current_history:
             if message["role"] == "user":
-                st.markdown(f'<div class="user-message">**You:** {message["content"]}</div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="user-message">You: {message["content"]}</div>', unsafe_allow_html=True)
             else:
                 st.markdown(
-                    f'<div class="ai-message">🕵️‍♂️ **Enrique AI:** {message["content"]}</div>',
+                    f'<div class="ai-message">🕵️‍♂️ Enrique AI: {message["content"]}</div>',
                     unsafe_allow_html=True,
                 )
 
