@@ -333,8 +333,6 @@ def chat_interface():
         query = st.text_input("Escribe tu mensaje", value="", key="chat_query")
         submit_button = st.form_submit_button("Enviar")
 
-# ...existing code...
-
     if submit_button:
         if query.strip():
             try:
@@ -353,7 +351,7 @@ def chat_interface():
                         response = "No relevant information found."
 
                     # Append assistant's response to the current conversation
-                    current_history.append({"role": "assistant", "content": response})
+    #                current_history.append({"role": "assistant", "content": response})
 
             except Exception as e:
                 st.error(f"An error occurred: {e}")
