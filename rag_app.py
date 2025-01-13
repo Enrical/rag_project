@@ -343,15 +343,7 @@ def chat_interface():
                         # Append assistant's response to the current conversation
                         current_history.append({"role": "assistant", "content": response})
 
-                    # Display the full chat history
-                        chat_placeholder = st.empty()  # Placeholder to dynamically update the chat
-                        with chat_placeholder.container():
-                            for message in current_history:
-                                if message["role"] == "user":
-                                    st.markdown(f'<div class="user-message">You: {message["content"]}</div>', unsafe_allow_html=True)
-                                elif message["role"] == "assistant":
-                                    st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {message["content"]}</div>', unsafe_allow_html=True)
-
+          
                     # Update chat dynamically
                     with chat_placeholder.container():
                         for message in current_history:
