@@ -297,7 +297,7 @@ def chat_interface():
         return
 
     # Get the current conversation history
-    current_history = st.session_state.conversations[st.session_state.current_conversation]
+ #   current_history = st.session_state.conversations[st.session_state.current_conversation]
 
 # Display the full chat history
     chat_placeholder = st.empty()  # Placeholder to dynamically update the chat
@@ -310,11 +310,11 @@ def chat_interface():
 
 
     # Display the conversation history
-    for message in current_history:
-        if message["role"] == "user":
-            st.markdown(f"**You:** {message['content']}")
-        else:
-            st.markdown(f" 🕵️‍♂️ **Enrique AI:** {message['content']}")
+ #   for message in current_history:
+ #       if message["role"] == "user":
+ #           st.markdown(f"**You:** {message['content']}")
+ #       else:
+ #           st.markdown(f" 🕵️‍♂️ **Enrique AI:** {message['content']}")
 
     # Input field and send button
 #    query = st.text_input("Your message", key="user_query_input")
@@ -336,7 +336,8 @@ def chat_interface():
     if submit_button:
         if query.strip():
             try:
-                # Append user's query to the current conversation
+                  # Append user's query to the current conversation
+                current_history = st.session_state.get('current_history', [])
                 current_history.append({"role": "user", "content": query})
 
                 # Generate the assistant's response
@@ -372,14 +373,14 @@ def chat_interface():
             except Exception as e:
                 st.error(f"Error generating response: {e}")
 
-            # Update chat dynamically
-            with chat_placeholder.container():
-                for message in current_history:
-                    if message["role"] == "user":
-                        st.markdown(f'<div class="user-message">You: {message["content"]}</div>', unsafe_allow_html=True)
-                    elif message["role"] == "assistant":
-                        st.markdown(f'<div class="assistant-message">Assistant: {message["content"]}</div>', unsafe_allow_html=True)
-
+  # Update chat dynamically
+    with chat_placeholder.container():
+        current_history = st.session_state.get('current_history', [])
+        for message in current_history:
+            if message["role"] == "user":
+                st.markdown(f'<div class="user-message">You: {message["content"]}</div>', unsafe_allow_html=True)
+            elif message["role"] == "assistant":
+                st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {message["content"]}</div>', unsafe_allow_html=True)
                 # Save the updated conversation
 #                try:
 #                    save_conversation(st.session_state.username, st.session_state.conversations)
