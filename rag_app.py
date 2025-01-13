@@ -256,7 +256,7 @@ def chat_interface():
             margin-bottom: 10px;
         }
         .ai-message {
-            color: darkblue;
+            color: black;
             font-weight: bold;
             margin-bottom: 10px;
         }
@@ -361,6 +361,14 @@ def chat_interface():
                                 st.markdown(f'<div class="user-message">You: {message["content"]}</div>', unsafe_allow_html=True)
                             elif message["role"] == "assistant":
                                 st.markdown(f'<div class="ai-message">🕵️‍♂️ Enrique AI: {message["content"]}</div>', unsafe_allow_html=True)
+               
+                # Ensure response is a plain string
+                    if isinstance(response, list):  # If response is a list (e.g., TextBlock objects)
+                        response = " ".join([str(item.text) if hasattr(item, 'text') else str(item) for item in response])
+                    elif hasattr(response, "text"):  # If single TextBlock object
+                            response = response.text
+                    elif not isinstance(response, str):
+                        response = str(response)
 
                 except Exception as e:
                     st.error(f"Error generating response: {str(e)}")
