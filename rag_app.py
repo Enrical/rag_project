@@ -197,6 +197,7 @@ class RAGPipeline:
             response = self.anthropic_client.messages.create(
                 model="claude-3-sonnet-20240229",
                 max_tokens=1024,
+                temperature=0.7,
                 system=system_prompt,
                 messages=messages
             )
