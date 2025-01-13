@@ -368,12 +368,12 @@ def chat_interface():
                 st.error(f"An error occurred: {e}")
 
             # Update chat dynamically
-#            with chat_placeholder.container():
- #               for message in current_history:
-  #                  if message["role"] == "user":
-   #                     st.markdown(f'<div class="user-message">You: {message["content"]}</div>', unsafe_allow_html=True)
-    #                elif message["role"] == "assistant":
-     #                   st.markdown(f'<div class="assistant-message">Assistant: {message["content"]}</div>', unsafe_allow_html=True)
+            with chat_placeholder.container():
+                for message in current_history:
+                    if message["role"] == "user":
+                        st.markdown(f'<div class="user-message">You: {message["content"]}</div>', unsafe_allow_html=True)
+                    elif message["role"] == "assistant":
+                        st.markdown(f'<div class="assistant-message">Assistant: {message["content"]}</div>', unsafe_allow_html=True)
 
                 # Save the updated conversation
                 try:
