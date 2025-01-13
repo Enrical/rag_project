@@ -297,7 +297,7 @@ def chat_interface():
         return
 
     # Get the current conversation history
-#    current_history = st.session_state.conversations[st.session_state.current_conversation]
+    current_history = st.session_state.conversations[st.session_state.current_conversation]
 
 # Display the full chat history
     chat_placeholder = st.empty()  # Placeholder to dynamically update the chat
