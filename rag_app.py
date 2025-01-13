@@ -364,16 +364,11 @@ def chat_interface():
                     elif message["role"] == "assistant":
                         st.markdown(f'<div class="assistant-message">Assistant: {message["content"]}</div>', unsafe_allow_html=True)
 
-# ...existing code...
                 # Save the updated conversation
                 try:
                     save_conversation(st.session_state.username, st.session_state.conversations)
                 except TypeError as e:
                     st.error(f"Failed to save conversation: {e}")
-
-  # Save the updated conversation
-                    save_conversation(st.session_state.username, st.session_state.conversations)
-
 
                 except Exception as e:
                     st.error(f"Error generating response: {str(e)}")
