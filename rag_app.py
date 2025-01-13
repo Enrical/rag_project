@@ -87,7 +87,7 @@ def check_login():
                 st.session_state.logged_in = True
                 st.session_state.username = username
                 st.session_state.conversations = user_data[username].get("conversations", {})
-                st.success("Login successful!")
+                st.success(st.button("continuar"))
             else:
                 st.error("Invalid username or password.")
         st.stop()
